@@ -137,3 +137,67 @@ async def test_file_entrypoint_maps_paths_inside_connected_vault(server, vault_d
                                                                         "resourceUri": "host-resource://4"}},
                                         meta={"openai/resource": {"path": str(vault_dir / ".obsidian/x.md")}})
         assert "vault_file" not in hidden.structured_content
+
+
+async def test_choose_notes_without_forms_returns_candidates(server):
+    async with Client(server) as client:
+        out = await client.call_tool("choose_notes", {"query": "plan"})
+        assert out.structured_content["status"] == "choose_in_chat"
+        assert "Projects/Plan.md" in out.structured_content["candidates"]
+
+
+async def test_choose_notes_mrtr_with_openai_extended_form(server):
+    from mcp.client import advertise
+    from mcp_types import ElicitResult
+
+    seen = {}
+
+    async def on_elicit(context, params):
+        seen["schema"] = params.requested_schema
+        options = params.requested_schema["properties"]["selection"]["x-openai-input"]["options"]
+        uri = next(o["uri"] for o in options if o["title"] == "Projects/Plan.md")
+        return ElicitResult(action="accept", content={"selection": [uri], "action": "read"})
+
+    async with Client(server, elicitation_callback=on_elicit,
+                      extensions=[advertise("openai/elicitation", {"form": {}})]) as client:
+        assert client.protocol_version >= "2026-07-28"
+        out = await client.call_tool("choose_notes", {"query": "plan"})
+        sc = out.structured_content
+        assert sc["status"] == "accepted" and sc["selected"] == ["Projects/Plan.md"]
+        assert "## Goals" in sc["notes"][0]["content"]
+        field = seen["schema"]["properties"]["selection"]
+        assert field["x-openai-input"]["selection"] == "explicit"
+        option = field["x-openai-input"]["options"][0]
+        assert option["_meta"]["openai/preview"]["target"]["type"] == "mcp_app_tool"
+        action = seen["schema"]["properties"]["action"]["oneOf"][0]
+        assert action["description"]
+        assert seen["schema"]["properties"]["tag"]["x-openai-suggestions"]
+
+
+async def test_choose_notes_rejects_unoffered_resource(server):
+    from mcp_types import ElicitResult
+
+    async def on_elicit(context, params):
+        return ElicitResult(action="accept", content={"selection": "obsidian://vault/x/evil.md", "action": "links"})
+
+    async with Client(server, elicitation_callback=on_elicit) as client:
+        out = await client.call_tool("choose_notes", {"query": "plan", "multiple": False})
+        assert out.is_error
+
+
+async def test_choose_images_uses_thumbnails(server, vault_dir):
+    from mcp.client import advertise
+    from mcp_types import ElicitResult
+
+    seen = {}
+
+    async def on_elicit(context, params):
+        seen["schema"] = params.requested_schema
+        return ElicitResult(action="decline")
+
+    async with Client(server, elicitation_callback=on_elicit,
+                      extensions=[advertise("openai/elicitation", {"form": {}})]) as client:
+        out = await client.call_tool("choose_notes", {"kind": "image"})
+        assert out.structured_content["status"] == "decline"
+        option = seen["schema"]["properties"]["selection"]["oneOf"][0]
+        assert option["x-openai-thumbnail"]["src"].startswith("data:image/png;base64,")

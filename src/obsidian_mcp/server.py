@@ -22,8 +22,12 @@ from mcp.server.mcpserver.prompts.base import UserMessage
 from mcp.shared.subscriptions import ResourceUpdated
 from mcp_types import (
     BlobResourceContents,
+    ElicitRequest,
+    ElicitRequestFormParams,
+    ElicitResult,
     EmptyResult,
     Icon,
+    InputRequiredResult,
     ReadResourceRequestParams,
     ReadResourceResult,
     ResourceLink,
@@ -928,6 +932,14 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
 
         return svc.cli_run(vault, "eval", {"code": community.dataview_eval_code(query)}, [], confirm_token)
 
+    # ---- Extended forms ----------------------------------------------------------------------
+    @tool("choose_notes", "Let the user pick notes", READ)
+    async def choose_notes(ctx: Context[Any, Any], query: str = "", vault: VaultArg = None, multiple: bool = True,
+                           kind: Literal["note", "image", "canvas", "base", "pdf"] = "note",
+                           limit: Annotated[int, Field(ge=1, le=50)] = 20) -> dict[str, Any] | InputRequiredResult:
+        """Ask the user to pick notes (or images) in a native form, then read, reference, or tag them."""
+        return await run_choose_notes(svc, openai, ctx, query, vault, multiple, kind, limit)
+
     # ---- Headless ----------------------------------------------------------------------------------
     @tool("headless", "Obsidian Headless", _ann(open_world=True))
     def headless(command: Annotated[str, Field(description=(
@@ -1068,3 +1080,92 @@ async def run_with_poller(server: MCPServer, coro_factory: Callable[[], Any]) ->
         await coro_factory()
         tg.cancel_scope.cancel()
 
+
+
+async def run_choose_notes(svc: ObsidianService, openai: OpenAIExtensions, ctx: Context[Any, Any], query: str,
+                           vault: str | None, multiple: bool, kind: str, limit: int) -> dict[str, Any] | InputRequiredResult:
+    from mcp_types.version import is_version_at_least
+
+    from . import forms
+
+    v = await anyio.to_thread.run_sync(svc.vault, vault)
+    found = await anyio.to_thread.run_sync(lambda: svc.search_notes(v.id, query, kinds=[kind], limit=limit))
+    items = [r["path"] for r in found["results"]]
+    if not items:
+        return {"status": "no_matches", "query": query}
+    tags = list((await anyio.to_thread.run_sync(svc.tags, v.id))["tags"])
+    images = kind == "image"
+    schema = forms.pick_schema(svc, v.id, items, uri_for, multiple=multiple and not images, images=images,
+                               tag_suggestions=tags)
+    message = f"Pick {'images' if images else 'notes'}" + (f" matching '{query}'" if query else "")
+    caps = ctx.client_capabilities
+    openai_forms = bool(caps and isinstance((caps.extensions or {}).get("openai/elicitation"), dict))
+    version = ctx.protocol_version or ""
+    content: dict[str, Any] | None = None
+    if version and is_version_at_least(version, "2026-07-28"):
+        responses = ctx.input_responses or {}
+        answer = responses.get("pick")
+        if answer is None:
+            if not (caps and caps.elicitation):
+                return {"status": "choose_in_chat", "candidates": items,
+                        "next_step": "Ask the user which of these to use; this client cannot show forms."}
+            return InputRequiredResult(input_requests={"pick": ElicitRequest(params=ElicitRequestFormParams(
+                message=message, requested_schema=schema if openai_forms else
+                forms.plain_schema([uri_for(v.id, p) for p in items], items)))}, request_state=query or "-")
+        result = answer if isinstance(answer, ElicitResult) else ElicitResult.model_validate(answer)
+        if result.action != "accept" or not result.content:
+            return {"status": result.action}
+        content = dict(result.content)
+    elif openai_forms:
+        from mcp.shared.message import ServerMessageMetadata
+        from mcp_types import ElicitRequestFormParams as Params
+        from openai_mcp_extensions.form._elicitation import _OpenAIFormRequest
+
+        result = await ctx.session.send_request(  # type: ignore[call-arg]
+            _OpenAIFormRequest(params=Params(message=message, requested_schema=schema)), ElicitResult,
+            metadata=ServerMessageMetadata(related_request_id=ctx.request_context.request_id))
+        if result.action != "accept" or not result.content:
+            return {"status": result.action}
+        content = dict(result.content)
+    elif caps and caps.elicitation:
+        plain = forms.plain_schema([uri_for(v.id, p) for p in items], items)
+        from mcp.shared.message import ServerMessageMetadata
+        from mcp_types import ElicitRequest as Req
+
+        result = await ctx.session.send_request(  # type: ignore[call-arg]
+            Req(params=ElicitRequestFormParams(message=message, requested_schema=plain)), ElicitResult,
+            metadata=ServerMessageMetadata(related_request_id=ctx.request_context.request_id))
+        if result.action != "accept" or not result.content:
+            return {"status": result.action}
+        content = dict(result.content)
+    else:
+        return {"status": "choose_in_chat", "candidates": items,
+                "next_step": "Ask the user which of these to use; this client cannot show forms."}
+    if openai_forms:
+        forms.validate_answer(schema, content)
+    chosen = content.get("selection")
+    uris = chosen if isinstance(chosen, list) else [chosen]
+    paths = []
+    for uri in uris:
+        vid, path = parse_uri(str(uri))
+        if vid != v.id or path not in items:
+            raise ObsidianError(Code.INVALID_ARGUMENT, "The form returned a resource that was not offered.")
+        paths.append(path)
+    action = content.get("action", "read")
+    out: dict[str, Any] = {"status": "accepted", "selected": paths, "action": action}
+    if action == "read" and not images:
+        out["notes"] = [await anyio.to_thread.run_sync(lambda p=p: svc.read_note(v.id, p)) for p in paths]
+    elif action == "tag" and content.get("tag"):
+        tag = str(content["tag"]).lstrip("#")
+        results = []
+        for p in paths:
+            note = await anyio.to_thread.run_sync(lambda p=p: svc.note_metadata(v.id, p))
+            existing = [t.lstrip("#") for t in (note["frontmatter"].get("tags") or [])] if isinstance(
+                note["frontmatter"].get("tags"), list) else []
+            if tag not in existing:
+                results.append(await anyio.to_thread.run_sync(
+                    lambda p=p, e=existing: svc.set_properties(v.id, p, {"tags": [*e, tag]})))
+        out["tagged"] = len(results)
+    else:
+        out["links"] = [{"type": "resource_link", "uri": uri_for(v.id, p), "name": p} for p in paths]
+    return out

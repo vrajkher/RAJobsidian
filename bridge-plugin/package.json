@@ -1,0 +1,17 @@
+{
+  "name": "obsidian-mcp-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Obsidian plugin bridge for obsidian-mcp",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --noEmit && node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.0",
+    "esbuild": "0.25.10",
+    "obsidian": "1.14.4",
+    "typescript": "5.9.3"
+  }
+}

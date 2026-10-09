@@ -1,0 +1,2721 @@
+{
+ "source": "https://github.com/obsidianmd/obsidian-help/blob/master/en/Extending%20Obsidian/Obsidian%20CLI.md",
+ "source_commit": "b95e59dab8b5d94ff06376f1437c8492f14da80d",
+ "source_date": "2026-10-08T21:29:00+00:00",
+ "minimum_installer": "1.12.7",
+ "global_params": [
+  "vault"
+ ],
+ "global_flags": [
+  "--copy"
+ ],
+ "commands": [
+  {
+   "name": "help",
+   "section": "General commands",
+   "description": "Show list of all available commands.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "version",
+   "section": "General commands",
+   "description": "Show Obsidian version.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "reload",
+   "section": "General commands",
+   "description": "Reload the app window.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "restart",
+   "section": "General commands",
+   "description": "Restart the app.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "bases",
+   "section": "Bases",
+   "description": "List all `.base` files in the vault.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "base:views",
+   "section": "Bases",
+   "description": "List views in the current base file.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "base:create",
+   "section": "Bases",
+   "description": "Create a new item in a base. Defaults to the active base view if no file is specified.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "base file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "base file path"
+    },
+    {
+     "name": "view",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "view name"
+    },
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "new file name"
+    },
+    {
+     "name": "content",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": false,
+     "description": "initial content"
+    }
+   ],
+   "flags": [
+    {
+     "name": "open",
+     "description": "open file after creating"
+    },
+    {
+     "name": "newtab",
+     "description": "open in new tab"
+    }
+   ]
+  },
+  {
+   "name": "base:query",
+   "section": "Bases",
+   "description": "Query a base and return results.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "base file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "base file path"
+    },
+    {
+     "name": "view",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "view name to query"
+    },
+    {
+     "name": "format",
+     "placeholder": "json|csv|tsv|md|paths",
+     "choices": [
+      "json",
+      "csv",
+      "tsv",
+      "md",
+      "paths"
+     ],
+     "required": false,
+     "description": "output format (default: json)"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "bookmarks",
+   "section": "Bookmarks",
+   "description": "List bookmarks.",
+   "params": [
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: tsv)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return bookmark count"
+    },
+    {
+     "name": "verbose",
+     "description": "include bookmark types"
+    }
+   ]
+  },
+  {
+   "name": "bookmark",
+   "section": "Bookmarks",
+   "description": "Add a bookmark.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file to bookmark"
+    },
+    {
+     "name": "subpath",
+     "placeholder": "<subpath>",
+     "choices": null,
+     "required": false,
+     "description": "subpath (heading or block) within file"
+    },
+    {
+     "name": "folder",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "folder to bookmark"
+    },
+    {
+     "name": "search",
+     "placeholder": "<query>",
+     "choices": null,
+     "required": false,
+     "description": "search query to bookmark"
+    },
+    {
+     "name": "url",
+     "placeholder": "<url>",
+     "choices": null,
+     "required": false,
+     "description": "URL to bookmark"
+    },
+    {
+     "name": "title",
+     "placeholder": "<title>",
+     "choices": null,
+     "required": false,
+     "description": "bookmark title"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "commands",
+   "section": "Command palette",
+   "description": "List available command IDs.",
+   "params": [
+    {
+     "name": "filter",
+     "placeholder": "<prefix>",
+     "choices": null,
+     "required": false,
+     "description": "filter by ID prefix"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "command",
+   "section": "Command palette",
+   "description": "Execute an Obsidian command.",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<command-id>",
+     "choices": null,
+     "required": true,
+     "description": "command ID to execute"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "hotkeys",
+   "section": "Command palette",
+   "description": "List hotkeys for all commands.",
+   "params": [
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: tsv)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return hotkey count"
+    },
+    {
+     "name": "verbose",
+     "description": "show if hotkey is custom"
+    }
+   ]
+  },
+  {
+   "name": "hotkey",
+   "section": "Command palette",
+   "description": "Get hotkey for a command.",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<command-id>",
+     "choices": null,
+     "required": true,
+     "description": "command ID"
+    }
+   ],
+   "flags": [
+    {
+     "name": "verbose",
+     "description": "show if custom or default"
+    }
+   ]
+  },
+  {
+   "name": "daily",
+   "section": "Daily notes",
+   "description": "Open daily note.",
+   "params": [
+    {
+     "name": "paneType",
+     "placeholder": "tab|split|window",
+     "choices": [
+      "tab",
+      "split",
+      "window"
+     ],
+     "required": false,
+     "description": "pane type to open in"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "daily:path",
+   "section": "Daily notes",
+   "description": "Get daily note path. Returns the expected path even if the file hasn't been created yet.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "daily:read",
+   "section": "Daily notes",
+   "description": "Read daily note contents.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "daily:append",
+   "section": "Daily notes",
+   "description": "Append content to daily note.",
+   "params": [
+    {
+     "name": "content",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": true,
+     "description": "content to append"
+    },
+    {
+     "name": "paneType",
+     "placeholder": "tab|split|window",
+     "choices": [
+      "tab",
+      "split",
+      "window"
+     ],
+     "required": false,
+     "description": "pane type to open in"
+    }
+   ],
+   "flags": [
+    {
+     "name": "inline",
+     "description": "append without newline"
+    },
+    {
+     "name": "open",
+     "description": "open file after adding"
+    }
+   ]
+  },
+  {
+   "name": "daily:prepend",
+   "section": "Daily notes",
+   "description": "Prepend content to daily note.",
+   "params": [
+    {
+     "name": "content",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": true,
+     "description": "content to prepend"
+    },
+    {
+     "name": "paneType",
+     "placeholder": "tab|split|window",
+     "choices": [
+      "tab",
+      "split",
+      "window"
+     ],
+     "required": false,
+     "description": "pane type to open in"
+    }
+   ],
+   "flags": [
+    {
+     "name": "inline",
+     "description": "prepend without newline"
+    },
+    {
+     "name": "open",
+     "description": "open file after adding"
+    }
+   ]
+  },
+  {
+   "name": "diff",
+   "section": "File history",
+   "description": "List or compare versions from local [[File recovery]] and [[Introduction to Obsidian Sync|Sync]]. Versions are numbered from newest to oldest.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "from",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": false,
+     "description": "version number to diff from"
+    },
+    {
+     "name": "to",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": false,
+     "description": "version number to diff to"
+    },
+    {
+     "name": "filter",
+     "placeholder": "local|sync",
+     "choices": [
+      "local",
+      "sync"
+     ],
+     "required": false,
+     "description": "filter by version source"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "history",
+   "section": "File history",
+   "description": "List versions from [[File recovery]] only. See [[#Sync|sync:history]] for the equivalent Sync command.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "history:list",
+   "section": "File history",
+   "description": "List all files with local history.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "history:read",
+   "section": "File history",
+   "description": "Read a local history version.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "version",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": false,
+     "description": "version number (default: 1)"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "history:restore",
+   "section": "File history",
+   "description": "Restore a local history version.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "version",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": true,
+     "description": "version number"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "history:open",
+   "section": "File history",
+   "description": "Open file recovery.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "file",
+   "section": "Files and folders",
+   "description": "Show file info (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "files",
+   "section": "Files and folders",
+   "description": "List files in the vault.",
+   "params": [
+    {
+     "name": "folder",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "filter by folder"
+    },
+    {
+     "name": "ext",
+     "placeholder": "<extension>",
+     "choices": null,
+     "required": false,
+     "description": "filter by extension"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return file count"
+    }
+   ]
+  },
+  {
+   "name": "folder",
+   "section": "Files and folders",
+   "description": "Show folder info.",
+   "params": [
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": true,
+     "description": "folder path"
+    },
+    {
+     "name": "info",
+     "placeholder": "files|folders|size",
+     "choices": [
+      "files",
+      "folders",
+      "size"
+     ],
+     "required": false,
+     "description": "return specific info only"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "folders",
+   "section": "Files and folders",
+   "description": "List folders in the vault.",
+   "params": [
+    {
+     "name": "folder",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "filter by parent folder"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return folder count"
+    }
+   ]
+  },
+  {
+   "name": "open",
+   "section": "Files and folders",
+   "description": "Open a file.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": [
+    {
+     "name": "newtab",
+     "description": "open in new tab"
+    }
+   ]
+  },
+  {
+   "name": "create",
+   "section": "Files and folders",
+   "description": "Create or overwrite a file.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "content",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": false,
+     "description": "initial content"
+    },
+    {
+     "name": "template",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "template to use"
+    }
+   ],
+   "flags": [
+    {
+     "name": "overwrite",
+     "description": "overwrite if file exists"
+    },
+    {
+     "name": "open",
+     "description": "open file after creating"
+    },
+    {
+     "name": "newtab",
+     "description": "open in new tab"
+    }
+   ]
+  },
+  {
+   "name": "read",
+   "section": "Files and folders",
+   "description": "Read file contents (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "append",
+   "section": "Files and folders",
+   "description": "Append content to a file (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "content",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": true,
+     "description": "content to append"
+    }
+   ],
+   "flags": [
+    {
+     "name": "inline",
+     "description": "append without newline"
+    }
+   ]
+  },
+  {
+   "name": "prepend",
+   "section": "Files and folders",
+   "description": "Prepend content after frontmatter (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "content",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": true,
+     "description": "content to prepend"
+    }
+   ],
+   "flags": [
+    {
+     "name": "inline",
+     "description": "prepend without newline"
+    }
+   ]
+  },
+  {
+   "name": "move",
+   "section": "Files and folders",
+   "description": "Move or rename a file (default: active file). This will automatically update [[internal links]] if turned on in your [[Settings#Automatically update internal links|vault settings]].",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "to",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": true,
+     "description": "destination folder or path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "rename",
+   "section": "Files and folders",
+   "description": "Rename a file (default: active file). The file extension is preserved automatically if omitted from the new name. Use [[#`move`|move]] to rename and move a file at the same time. This will automatically update [[internal links]] if turned on in your [[Settings#Automatically update internal links|vault settings]].",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "new file name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "delete",
+   "section": "Files and folders",
+   "description": "Delete a file (default: active file, trash by default).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": [
+    {
+     "name": "permanent",
+     "description": "skip trash, delete permanently"
+    }
+   ]
+  },
+  {
+   "name": "backlinks",
+   "section": "Links",
+   "description": "List backlinks to a file (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "target file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "target file path"
+    },
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: tsv)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "counts",
+     "description": "include link counts"
+    },
+    {
+     "name": "total",
+     "description": "return backlink count"
+    }
+   ]
+  },
+  {
+   "name": "links",
+   "section": "Links",
+   "description": "List outgoing links from a file (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return link count"
+    }
+   ]
+  },
+  {
+   "name": "unresolved",
+   "section": "Links",
+   "description": "List unresolved links in vault.",
+   "params": [
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: tsv)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return unresolved link count"
+    },
+    {
+     "name": "counts",
+     "description": "include link counts"
+    },
+    {
+     "name": "verbose",
+     "description": "include source files"
+    }
+   ]
+  },
+  {
+   "name": "orphans",
+   "section": "Links",
+   "description": "List files with no incoming links.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return orphan count"
+    }
+   ]
+  },
+  {
+   "name": "deadends",
+   "section": "Links",
+   "description": "List files with no outgoing links.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return dead-end count"
+    }
+   ]
+  },
+  {
+   "name": "outline",
+   "section": "Outline",
+   "description": "Show headings for the current file.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "format",
+     "placeholder": "tree|md|json",
+     "choices": [
+      "tree",
+      "md",
+      "json"
+     ],
+     "required": false,
+     "description": "output format (default: tree)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return heading count"
+    }
+   ]
+  },
+  {
+   "name": "plugins",
+   "section": "Plugins",
+   "description": "List installed plugins.",
+   "params": [
+    {
+     "name": "filter",
+     "placeholder": "core|community",
+     "choices": [
+      "core",
+      "community"
+     ],
+     "required": false,
+     "description": "filter by plugin type"
+    },
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: tsv)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "versions",
+     "description": "include version numbers"
+    }
+   ]
+  },
+  {
+   "name": "plugins:enabled",
+   "section": "Plugins",
+   "description": "List enabled plugins.",
+   "params": [
+    {
+     "name": "filter",
+     "placeholder": "core|community",
+     "choices": [
+      "core",
+      "community"
+     ],
+     "required": false,
+     "description": "filter by plugin type"
+    },
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: tsv)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "versions",
+     "description": "include version numbers"
+    }
+   ]
+  },
+  {
+   "name": "plugins:restrict",
+   "section": "Plugins",
+   "description": "Toggle or check restricted mode.",
+   "params": [],
+   "flags": [
+    {
+     "name": "on",
+     "description": "enable restricted mode"
+    },
+    {
+     "name": "off",
+     "description": "disable restricted mode"
+    }
+   ]
+  },
+  {
+   "name": "plugin",
+   "section": "Plugins",
+   "description": "Get plugin info.",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<plugin-id>",
+     "choices": null,
+     "required": true,
+     "description": "plugin ID"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "plugin:enable",
+   "section": "Plugins",
+   "description": "Enable a plugin.",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<id>",
+     "choices": null,
+     "required": true,
+     "description": "plugin ID"
+    },
+    {
+     "name": "filter",
+     "placeholder": "core|community",
+     "choices": [
+      "core",
+      "community"
+     ],
+     "required": false,
+     "description": "plugin type"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "plugin:disable",
+   "section": "Plugins",
+   "description": "Disable a plugin.",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<id>",
+     "choices": null,
+     "required": true,
+     "description": "plugin ID"
+    },
+    {
+     "name": "filter",
+     "placeholder": "core|community",
+     "choices": [
+      "core",
+      "community"
+     ],
+     "required": false,
+     "description": "plugin type"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "plugin:install",
+   "section": "Plugins",
+   "description": "Install a community plugin.",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<id>",
+     "choices": null,
+     "required": true,
+     "description": "plugin ID"
+    }
+   ],
+   "flags": [
+    {
+     "name": "enable",
+     "description": "enable after install"
+    }
+   ]
+  },
+  {
+   "name": "plugin:uninstall",
+   "section": "Plugins",
+   "description": "Uninstall a community plugin.",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<id>",
+     "choices": null,
+     "required": true,
+     "description": "plugin ID"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "plugin:reload",
+   "section": "Plugins",
+   "description": "Reload a plugin (for developers).",
+   "params": [
+    {
+     "name": "id",
+     "placeholder": "<id>",
+     "choices": null,
+     "required": true,
+     "description": "plugin ID"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "aliases",
+   "section": "Properties",
+   "description": "List aliases in the vault. Use `active` or `file`/`path` to show aliases for a specific file.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return alias count"
+    },
+    {
+     "name": "verbose",
+     "description": "include file paths"
+    },
+    {
+     "name": "active",
+     "description": "show aliases for active file"
+    }
+   ]
+  },
+  {
+   "name": "properties",
+   "section": "Properties",
+   "description": "List properties in the vault. Use `active` or `file`/`path` to show properties for a specific file.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "show properties for file"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "show properties for path"
+    },
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "get specific property count"
+    },
+    {
+     "name": "sort",
+     "placeholder": "count",
+     "choices": [
+      "count"
+     ],
+     "required": false,
+     "description": "sort by count (default: name)"
+    },
+    {
+     "name": "format",
+     "placeholder": "yaml|json|tsv",
+     "choices": [
+      "yaml",
+      "json",
+      "tsv"
+     ],
+     "required": false,
+     "description": "output format (default: yaml)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return property count"
+    },
+    {
+     "name": "counts",
+     "description": "include occurrence counts"
+    },
+    {
+     "name": "active",
+     "description": "show properties for active file"
+    }
+   ]
+  },
+  {
+   "name": "property:set",
+   "section": "Properties",
+   "description": "Set a property on a file (default: active file).",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "property name"
+    },
+    {
+     "name": "value",
+     "placeholder": "<value>",
+     "choices": null,
+     "required": true,
+     "description": "property value"
+    },
+    {
+     "name": "type",
+     "placeholder": "text|list|number|checkbox|date|datetime",
+     "choices": [
+      "text",
+      "list",
+      "number",
+      "checkbox",
+      "date",
+      "datetime"
+     ],
+     "required": false,
+     "description": "property type"
+    },
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "property:remove",
+   "section": "Properties",
+   "description": "Remove a property from a file (default: active file).",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "property name"
+    },
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "property:read",
+   "section": "Properties",
+   "description": "Read a property value from a file (default: active file).",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "property name"
+    },
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "publish:site",
+   "section": "Publish",
+   "description": "Show publish site info (slug, URL).",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "publish:list",
+   "section": "Publish",
+   "description": "List published files.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return published file count"
+    }
+   ]
+  },
+  {
+   "name": "publish:status",
+   "section": "Publish",
+   "description": "List publish changes.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return change count"
+    },
+    {
+     "name": "new",
+     "description": "show new files only"
+    },
+    {
+     "name": "changed",
+     "description": "show changed files only"
+    },
+    {
+     "name": "deleted",
+     "description": "show deleted files only"
+    }
+   ]
+  },
+  {
+   "name": "publish:add",
+   "section": "Publish",
+   "description": "Publish a file or all changed files (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": [
+    {
+     "name": "changed",
+     "description": "publish all changed files"
+    }
+   ]
+  },
+  {
+   "name": "publish:remove",
+   "section": "Publish",
+   "description": "Unpublish a file (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "publish:open",
+   "section": "Publish",
+   "description": "Open file on published site (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "random",
+   "section": "Random notes",
+   "description": "Open a random note.",
+   "params": [
+    {
+     "name": "folder",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "limit to folder"
+    }
+   ],
+   "flags": [
+    {
+     "name": "newtab",
+     "description": "open in new tab"
+    }
+   ]
+  },
+  {
+   "name": "random:read",
+   "section": "Random notes",
+   "description": "Read a random note (includes path).",
+   "params": [
+    {
+     "name": "folder",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "limit to folder"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "search",
+   "section": "Search",
+   "description": "Search vault for text. Returns matching file paths.",
+   "params": [
+    {
+     "name": "query",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": true,
+     "description": "search query"
+    },
+    {
+     "name": "path",
+     "placeholder": "<folder>",
+     "choices": null,
+     "required": false,
+     "description": "limit to folder"
+    },
+    {
+     "name": "limit",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": false,
+     "description": "max files"
+    },
+    {
+     "name": "format",
+     "placeholder": "text|json",
+     "choices": [
+      "text",
+      "json"
+     ],
+     "required": false,
+     "description": "output format (default: text)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return match count"
+    },
+    {
+     "name": "case",
+     "description": "case sensitive"
+    }
+   ]
+  },
+  {
+   "name": "search:context",
+   "section": "Search",
+   "description": "Search with matching line context. Returns grep-style `path:line: text` output.",
+   "params": [
+    {
+     "name": "query",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": true,
+     "description": "search query"
+    },
+    {
+     "name": "path",
+     "placeholder": "<folder>",
+     "choices": null,
+     "required": false,
+     "description": "limit to folder"
+    },
+    {
+     "name": "limit",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": false,
+     "description": "max files"
+    },
+    {
+     "name": "format",
+     "placeholder": "text|json",
+     "choices": [
+      "text",
+      "json"
+     ],
+     "required": false,
+     "description": "output format (default: text)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "case",
+     "description": "case sensitive"
+    }
+   ]
+  },
+  {
+   "name": "search:open",
+   "section": "Search",
+   "description": "Open search view.",
+   "params": [
+    {
+     "name": "query",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": false,
+     "description": "initial search query"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "sync",
+   "section": "Sync",
+   "description": "Pause or resume sync.",
+   "params": [],
+   "flags": [
+    {
+     "name": "on",
+     "description": "resume sync"
+    },
+    {
+     "name": "off",
+     "description": "pause sync"
+    }
+   ]
+  },
+  {
+   "name": "sync:status",
+   "section": "Sync",
+   "description": "Show sync status and usage.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "sync:history",
+   "section": "Sync",
+   "description": "List sync version history for a file (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return version count"
+    }
+   ]
+  },
+  {
+   "name": "sync:read",
+   "section": "Sync",
+   "description": "Read a sync version (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "version",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": true,
+     "description": "version number"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "sync:restore",
+   "section": "Sync",
+   "description": "Restore a sync version (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "version",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": true,
+     "description": "version number"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "sync:open",
+   "section": "Sync",
+   "description": "Open sync history (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "sync:deleted",
+   "section": "Sync",
+   "description": "List deleted files in sync.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return deleted file count"
+    }
+   ]
+  },
+  {
+   "name": "tags",
+   "section": "Tags",
+   "description": "List tags in the vault. Use `active` or `file`/`path` to show tags for a specific file.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "sort",
+     "placeholder": "count",
+     "choices": [
+      "count"
+     ],
+     "required": false,
+     "description": "sort by count (default: name)"
+    },
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: tsv)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return tag count"
+    },
+    {
+     "name": "counts",
+     "description": "include tag counts"
+    },
+    {
+     "name": "active",
+     "description": "show tags for active file"
+    }
+   ]
+  },
+  {
+   "name": "tag",
+   "section": "Tags",
+   "description": "Get tag info.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<tag>",
+     "choices": null,
+     "required": true,
+     "description": "tag name"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return occurrence count"
+    },
+    {
+     "name": "verbose",
+     "description": "include file list and count"
+    }
+   ]
+  },
+  {
+   "name": "tasks",
+   "section": "Tasks",
+   "description": "List tasks in the vault. Use `active` or `file`/`path` to show tasks for a specific file.",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "filter by file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "filter by file path"
+    },
+    {
+     "name": "status",
+     "placeholder": "<char>",
+     "choices": null,
+     "required": false,
+     "description": "filter by status character"
+    },
+    {
+     "name": "format",
+     "placeholder": "json|tsv|csv",
+     "choices": [
+      "json",
+      "tsv",
+      "csv"
+     ],
+     "required": false,
+     "description": "output format (default: text)"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return task count"
+    },
+    {
+     "name": "done",
+     "description": "show completed tasks"
+    },
+    {
+     "name": "todo",
+     "description": "show incomplete tasks"
+    },
+    {
+     "name": "verbose",
+     "description": "group by file with line numbers"
+    },
+    {
+     "name": "active",
+     "description": "show tasks for active file"
+    },
+    {
+     "name": "daily",
+     "description": "show tasks from daily note"
+    }
+   ]
+  },
+  {
+   "name": "task",
+   "section": "Tasks",
+   "description": "Show or update a task.",
+   "params": [
+    {
+     "name": "ref",
+     "placeholder": "<path:line>",
+     "choices": null,
+     "required": false,
+     "description": "task reference (path:line)"
+    },
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    },
+    {
+     "name": "line",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": false,
+     "description": "line number"
+    },
+    {
+     "name": "status",
+     "placeholder": "<char>",
+     "choices": null,
+     "required": false,
+     "description": "set status character"
+    }
+   ],
+   "flags": [
+    {
+     "name": "toggle",
+     "description": "toggle task status"
+    },
+    {
+     "name": "daily",
+     "description": "daily note"
+    },
+    {
+     "name": "done",
+     "description": "mark as done"
+    },
+    {
+     "name": "todo",
+     "description": "mark as todo"
+    }
+   ]
+  },
+  {
+   "name": "templates",
+   "section": "Templates",
+   "description": "List templates.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return template count"
+    }
+   ]
+  },
+  {
+   "name": "template:read",
+   "section": "Templates",
+   "description": "Read template content.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<template>",
+     "choices": null,
+     "required": true,
+     "description": "template name"
+    },
+    {
+     "name": "title",
+     "placeholder": "<title>",
+     "choices": null,
+     "required": false,
+     "description": "title for variable resolution"
+    }
+   ],
+   "flags": [
+    {
+     "name": "resolve",
+     "description": "resolve template variables"
+    }
+   ]
+  },
+  {
+   "name": "template:insert",
+   "section": "Templates",
+   "description": "Insert template into active file.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<template>",
+     "choices": null,
+     "required": true,
+     "description": "template name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "themes",
+   "section": "Themes and snippets",
+   "description": "List installed themes.",
+   "params": [],
+   "flags": [
+    {
+     "name": "versions",
+     "description": "include version numbers"
+    }
+   ]
+  },
+  {
+   "name": "theme",
+   "section": "Themes and snippets",
+   "description": "Show active theme or get info.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "theme name for details"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "theme:set",
+   "section": "Themes and snippets",
+   "description": "Set active theme.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "theme name (empty for default)"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "theme:install",
+   "section": "Themes and snippets",
+   "description": "Install a community theme.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "theme name"
+    }
+   ],
+   "flags": [
+    {
+     "name": "enable",
+     "description": "activate after install"
+    }
+   ]
+  },
+  {
+   "name": "theme:uninstall",
+   "section": "Themes and snippets",
+   "description": "Uninstall a theme.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "theme name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "snippets",
+   "section": "Themes and snippets",
+   "description": "List installed CSS snippets.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "snippets:enabled",
+   "section": "Themes and snippets",
+   "description": "List enabled CSS snippets.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "snippet:enable",
+   "section": "Themes and snippets",
+   "description": "Enable a CSS snippet.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "snippet name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "snippet:disable",
+   "section": "Themes and snippets",
+   "description": "Disable a CSS snippet.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "snippet name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "unique",
+   "section": "Unique notes",
+   "description": "Create unique note.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": false,
+     "description": "note name"
+    },
+    {
+     "name": "content",
+     "placeholder": "<text>",
+     "choices": null,
+     "required": false,
+     "description": "initial content"
+    },
+    {
+     "name": "paneType",
+     "placeholder": "tab|split|window",
+     "choices": [
+      "tab",
+      "split",
+      "window"
+     ],
+     "required": false,
+     "description": "pane type to open in"
+    }
+   ],
+   "flags": [
+    {
+     "name": "open",
+     "description": "open file after creating"
+    }
+   ]
+  },
+  {
+   "name": "vault",
+   "section": "Vault",
+   "description": "Show vault info.",
+   "params": [
+    {
+     "name": "info",
+     "placeholder": "name|path|files|folders|size",
+     "choices": [
+      "name",
+      "path",
+      "files",
+      "folders",
+      "size"
+     ],
+     "required": false,
+     "description": "return specific info only"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "vaults",
+   "section": "Vault",
+   "description": "List known vaults.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return vault count"
+    },
+    {
+     "name": "verbose",
+     "description": "include vault paths"
+    }
+   ]
+  },
+  {
+   "name": "vault:open",
+   "section": "Vault",
+   "description": "Switch to a different vault (TUI only).",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "vault name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "web",
+   "section": "Web viewer",
+   "description": "Open URL in web viewer.",
+   "params": [
+    {
+     "name": "url",
+     "placeholder": "<url>",
+     "choices": null,
+     "required": true,
+     "description": "URL to open"
+    }
+   ],
+   "flags": [
+    {
+     "name": "newtab",
+     "description": "open in new tab"
+    }
+   ]
+  },
+  {
+   "name": "wordcount",
+   "section": "Wordcount",
+   "description": "Count words and characters (default: active file).",
+   "params": [
+    {
+     "name": "file",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "file name"
+    },
+    {
+     "name": "path",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file path"
+    }
+   ],
+   "flags": [
+    {
+     "name": "words",
+     "description": "return word count only"
+    },
+    {
+     "name": "characters",
+     "description": "return character count only"
+    }
+   ]
+  },
+  {
+   "name": "workspace",
+   "section": "Workspace",
+   "description": "Show workspace tree.",
+   "params": [],
+   "flags": [
+    {
+     "name": "ids",
+     "description": "include workspace item IDs"
+    }
+   ]
+  },
+  {
+   "name": "workspaces",
+   "section": "Workspace",
+   "description": "List saved workspaces.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return workspace count"
+    }
+   ]
+  },
+  {
+   "name": "workspace:save",
+   "section": "Workspace",
+   "description": "Save current layout as workspace.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "workspace name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "workspace:load",
+   "section": "Workspace",
+   "description": "Load a saved workspace.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "workspace name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "workspace:delete",
+   "section": "Workspace",
+   "description": "Delete a saved workspace.",
+   "params": [
+    {
+     "name": "name",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": true,
+     "description": "workspace name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "tabs",
+   "section": "Workspace",
+   "description": "List open tabs.",
+   "params": [],
+   "flags": [
+    {
+     "name": "ids",
+     "description": "include tab IDs"
+    }
+   ]
+  },
+  {
+   "name": "tab:open",
+   "section": "Workspace",
+   "description": "Open a new tab.",
+   "params": [
+    {
+     "name": "group",
+     "placeholder": "<id>",
+     "choices": null,
+     "required": false,
+     "description": "tab group ID"
+    },
+    {
+     "name": "file",
+     "placeholder": "<path>",
+     "choices": null,
+     "required": false,
+     "description": "file to open"
+    },
+    {
+     "name": "view",
+     "placeholder": "<type>",
+     "choices": null,
+     "required": false,
+     "description": "view type to open"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "recents",
+   "section": "Workspace",
+   "description": "List recently opened files.",
+   "params": [],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return recent file count"
+    }
+   ]
+  },
+  {
+   "name": "devtools",
+   "section": "Developer commands",
+   "description": "Toggle Electron dev tools.",
+   "params": [],
+   "flags": []
+  },
+  {
+   "name": "dev:debug",
+   "section": "Developer commands",
+   "description": "Attach/detach Chrome DevTools Protocol debugger.",
+   "params": [],
+   "flags": [
+    {
+     "name": "on",
+     "description": "attach debugger"
+    },
+    {
+     "name": "off",
+     "description": "detach debugger"
+    }
+   ]
+  },
+  {
+   "name": "dev:cdp",
+   "section": "Developer commands",
+   "description": "Run a Chrome DevTools Protocol command.",
+   "params": [
+    {
+     "name": "method",
+     "placeholder": "<CDP.method>",
+     "choices": null,
+     "required": true,
+     "description": "CDP method to call"
+    },
+    {
+     "name": "params",
+     "placeholder": "<json>",
+     "choices": null,
+     "required": false,
+     "description": "method parameters as JSON"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "dev:errors",
+   "section": "Developer commands",
+   "description": "Show captured JavaScript errors.",
+   "params": [],
+   "flags": [
+    {
+     "name": "clear",
+     "description": "clear the error buffer"
+    }
+   ]
+  },
+  {
+   "name": "dev:screenshot",
+   "section": "Developer commands",
+   "description": "Take a screenshot (returns base64 PNG).",
+   "params": [
+    {
+     "name": "path",
+     "placeholder": "<filename>",
+     "choices": null,
+     "required": false,
+     "description": "output file path"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "dev:console",
+   "section": "Developer commands",
+   "description": "Show captured console messages.",
+   "params": [
+    {
+     "name": "limit",
+     "placeholder": "<n>",
+     "choices": null,
+     "required": false,
+     "description": "max messages to show (default 50)"
+    },
+    {
+     "name": "level",
+     "placeholder": "log|warn|error|info|debug",
+     "choices": [
+      "log",
+      "warn",
+      "error",
+      "info",
+      "debug"
+     ],
+     "required": false,
+     "description": "filter by log level"
+    }
+   ],
+   "flags": [
+    {
+     "name": "clear",
+     "description": "clear the console buffer"
+    }
+   ]
+  },
+  {
+   "name": "dev:css",
+   "section": "Developer commands",
+   "description": "Inspect CSS with source locations.",
+   "params": [
+    {
+     "name": "selector",
+     "placeholder": "<css>",
+     "choices": null,
+     "required": true,
+     "description": "CSS selector"
+    },
+    {
+     "name": "prop",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "filter by property name"
+    }
+   ],
+   "flags": []
+  },
+  {
+   "name": "dev:dom",
+   "section": "Developer commands",
+   "description": "Query DOM elements.",
+   "params": [
+    {
+     "name": "selector",
+     "placeholder": "<css>",
+     "choices": null,
+     "required": true,
+     "description": "CSS selector"
+    },
+    {
+     "name": "attr",
+     "placeholder": "<name>",
+     "choices": null,
+     "required": false,
+     "description": "get attribute value"
+    },
+    {
+     "name": "css",
+     "placeholder": "<prop>",
+     "choices": null,
+     "required": false,
+     "description": "get CSS property value"
+    }
+   ],
+   "flags": [
+    {
+     "name": "total",
+     "description": "return element count"
+    },
+    {
+     "name": "text",
+     "description": "return text content"
+    },
+    {
+     "name": "inner",
+     "description": "return innerHTML instead of outerHTML"
+    },
+    {
+     "name": "all",
+     "description": "return all matches instead of first"
+    }
+   ]
+  },
+  {
+   "name": "dev:mobile",
+   "section": "Developer commands",
+   "description": "Toggle mobile emulation.",
+   "params": [],
+   "flags": [
+    {
+     "name": "on",
+     "description": "enable mobile emulation"
+    },
+    {
+     "name": "off",
+     "description": "disable mobile emulation"
+    }
+   ]
+  },
+  {
+   "name": "eval",
+   "section": "Developer commands",
+   "description": "Execute JavaScript and return result.",
+   "params": [
+    {
+     "name": "code",
+     "placeholder": "<javascript>",
+     "choices": null,
+     "required": true,
+     "description": "JavaScript code to execute"
+    }
+   ],
+   "flags": []
+  }
+ ]
+}

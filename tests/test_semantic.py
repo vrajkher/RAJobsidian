@@ -56,9 +56,9 @@ def semantic_service(service, embed_server, vault_dir):
     service.config.semantic_search = True
     service.config.embedding_url = url
     (vault_dir / "Private").mkdir()
-    (vault_dir / "Private" / "Diary.md").write_bytes("secret garden thoughts".encode())
-    (vault_dir / "Opted out.md").write_bytes("---\nai: false\n---\ngarden plans to keep offline\n".encode())
-    (vault_dir / "Garden.md").write_bytes("# Garden\n## Tomatoes\nWater the tomatoes every morning.\n".encode())
+    (vault_dir / "Private" / "Diary.md").write_bytes(b"secret garden thoughts")
+    (vault_dir / "Opted out.md").write_bytes(b"---\nai: false\n---\ngarden plans to keep offline\n")
+    (vault_dir / "Garden.md").write_bytes(b"# Garden\n## Tomatoes\nWater the tomatoes every morning.\n")
     service.config.embedding_exclude = ["Private"]
     return service
 

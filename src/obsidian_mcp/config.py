@@ -66,6 +66,11 @@ class Config:
     max_read_bytes: int = 2_000_000
     page_size: int = 50
     semantic_search: bool = False
+    embedding_url: str = "http://127.0.0.1:11434/v1"
+    embedding_model: str = "nomic-embed-text"
+    embedding_api_key_env: str | None = None
+    embedding_allow_remote: bool = False
+    embedding_exclude: list[str] = field(default_factory=list)
     discover_obsidian_vaults: bool = True
 
     def public_dict(self) -> dict[str, Any]:

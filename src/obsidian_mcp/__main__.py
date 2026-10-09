@@ -23,6 +23,8 @@ from .config import Config, ConfigStore, Permissions
 def _parse_value(key: str, raw: str) -> Any:
     types = {f.name: f.type for f in fields(Config)} | {f.name: "bool" for f in fields(Permissions)}
     kind = str(types.get(key, "str"))
+    if "list" in kind:
+        return [part.strip() for part in raw.split(",") if part.strip()]
     if "bool" in kind:
         if raw.lower() in ("1", "true", "yes", "on"):
             return True

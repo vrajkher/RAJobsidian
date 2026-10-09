@@ -56,7 +56,7 @@ Source-backed inventory of Obsidian and OpenAI MCP Extensions features, and how 
 | Merge, extract (Note composer) | Note composer | FS | – | ✅ | `test_merge_and_extract` | Note composer templates are not applied |
 | Link insertion, link repair | – | FS | – | ✅ | `test_link_notes_and_repair` | |
 | Duplicate detection | – | FS | – | ✅ | `test_duplicates_and_related` | Exact, near (shingles), and same name |
-| Semantic search | – | FS | – | 🟠 | `related_notes` (TF-IDF) | Local TF-IDF only. No external embedding provider is implemented, by design for privacy. |
+| Semantic search | – | FS + user's embedding endpoint | opt-in (`semantic_search`); local model server by default | ✅ | `tests/test_semantic.py` | Off by default. Any OpenAI-compatible `/embeddings` endpoint (Ollama, LM Studio, llama.cpp, vLLM; remote only with `embedding_allow_remote`). Excludes folders and `ai: false` notes. Incremental cache. `related_notes` (TF-IDF) still works offline. |
 
 ## 3. Core plugins
 

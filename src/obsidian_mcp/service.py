@@ -38,6 +38,7 @@ from .policy import CONFIRM_RISKS, Policy, Risk, cli_risk
 from .progress import Progress, no_progress
 from .registry import VaultRegistry, discover
 from .search import RelatedNotes, duplicates, search
+from .semantic import SemanticIndex
 from .vault import TRASH_DIR, Vault, etag_of, file_kind, mime_of, normalize_rel, unified_diff
 
 NOTE_EXT = ".md"
@@ -57,6 +58,7 @@ class ObsidianService:
         self.policy = Policy(self.store.config.permissions)
         self._indexes: dict[str, VaultIndex] = {}
         self._related: dict[str, RelatedNotes] = {}
+        self._semantic: dict[str, SemanticIndex] = {}
         self._lock = threading.RLock()
         self.listeners: list[Any] = []  # callables(vault_id, paths) for resource-updated notifications
 
@@ -152,8 +154,10 @@ class ObsidianService:
                                      "Sync/Publish subscriptions required. Open beta."},
             "permissions": dict(self.config.permissions.__dict__),
             "semantic_search": {"enabled": self.config.semantic_search,
-                                "detail": "Local TF-IDF 'related notes' always works offline; no external "
-                                          "embedding provider is configured."},
+                                "endpoint": self.config.embedding_url, "model": self.config.embedding_model,
+                                "remote_allowed": self.config.embedding_allow_remote,
+                                "detail": "related_notes (local TF-IDF) always works offline. semantic_search uses "
+                                          "your embedding endpoint (local by default) once you enable it."},
         }
         if probe:
             if cli.available:
@@ -625,6 +629,17 @@ class ObsidianService:
         rel = self._related.setdefault(v.id, RelatedNotes(self.index(v)))
         return {"path": path, "method": "local TF-IDF (no data leaves this machine)",
                 "related": rel.related(path, limit)}
+
+    def semantic_search(self, vault: str | None, query: str, *, limit: int = 10, folder: str | None = None,
+                        progress: Progress = no_progress,
+                        cancelled: Callable[[], bool] = lambda: False) -> dict[str, Any]:
+        """Search by meaning through the user's embedding endpoint (opt-in; local by default)."""
+        v = self.vault(vault)
+        with self._lock:
+            sem = self._semantic.get(v.id)
+            if sem is None or sem.config is not self.config:
+                sem = self._semantic[v.id] = SemanticIndex(self.index(v), self.config, self.store.state_dir)
+        return sem.search(query, limit=limit, folder=folder, progress=progress, cancelled=cancelled)
 
     def find_duplicates(self, vault: str | None, threshold: float = 0.8) -> dict[str, Any]:
         return duplicates(self.index(self.vault(vault)), threshold)

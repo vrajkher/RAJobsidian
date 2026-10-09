@@ -78,6 +78,28 @@ obsidian-mcp config show
 
 Models cannot change risky permissions. When an action needs confirmation, the assistant shows a summary and only proceeds after you agree.
 
+## Semantic search (optional)
+
+`search_notes` matches words. `semantic_search` finds notes by meaning, using an embedding model **you** choose. It is off until you enable it:
+
+```sh
+# Local and private (recommended): Ollama on this computer
+ollama pull nomic-embed-text
+obsidian-mcp config set semantic_search true
+
+# Any other OpenAI-compatible server (LM Studio, llama.cpp, vLLM...)
+obsidian-mcp config set embedding_url http://127.0.0.1:1234/v1
+obsidian-mcp config set embedding_model <model-name>
+
+# A remote service sends note text off this computer, so it needs two explicit steps:
+obsidian-mcp config set embedding_url https://api.openai.com/v1
+obsidian-mcp config set embedding_model text-embedding-3-small
+obsidian-mcp config set embedding_api_key_env OPENAI_API_KEY   # the key stays in your environment
+obsidian-mcp config set embedding_allow_remote true
+```
+
+Keep notes out of it with `obsidian-mcp config set embedding_exclude "Private,Journal"`, or add `ai: false` to a note's properties. The first search embeds the vault (with progress updates); later searches only embed changed sections. Vectors are cached in `~/.config/obsidian-mcp/state/semantic/`.
+
 ## Everyday tasks
 
 | You want to… | Ask, or the tool used |

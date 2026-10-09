@@ -630,6 +630,14 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
         """Notes with similar wording (local TF-IDF; no data leaves the machine)."""
         return svc.related_notes(vault, path, limit)
 
+    @tool("semantic_search", "Search by meaning", READ)
+    def semantic_search(query: str, ctx: Context[Any, Any], vault: VaultArg = None, folder: str | None = None,
+                        limit: Annotated[int, Field(ge=1, le=50)] = 10) -> dict[str, Any]:
+        """Find note sections by meaning using the user's embedding model (opt-in; local by default).
+        The first run embeds the vault and reports progress; later runs only embed changed sections."""
+        return svc.semantic_search(vault, query, limit=limit, folder=folder, progress=progress.reporter(ctx),
+                                   cancelled=progress.cancel_checker())
+
     @tool("find_duplicates", "Find duplicates", READ)
     def find_duplicates(vault: VaultArg = None, threshold: float = 0.8) -> dict[str, Any]:
         """Identical notes, near-duplicates, and notes sharing a file name."""

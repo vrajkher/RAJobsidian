@@ -20,7 +20,6 @@ Last updated: 2026-10-09. All seven planned phases have a working implementation
 
 - 🟡 Not yet run against a real Obsidian app, Sync/Publish account, Headless login, or ChatGPT host (see VERIFICATION.md, items 1–5).
 - Legacy (pre-2026) `openai/elicitation/create` path in `choose_notes` is untested: the SDK has no client for it.
-- Semantic search is local TF-IDF only; an external embedding provider is intentionally not implemented.
 - HTTP multi-user: one process per user; no OAuth.
 - The unique-note config file name/default and the attachment-folder key are undocumented assumptions with fallbacks.
 
@@ -28,7 +27,7 @@ Last updated: 2026-10-09. All seven planned phases have a working implementation
 
 1. Run VERIFICATION.md items 1–5 locally and record results in this file; fix anything that differs.
 2. ~~Add MCP progress notifications for batch edits and Headless runs.~~ Done: progress plus cancellation (batch rollback, `ob` kill).
-3. Optional: an embedding provider behind `semantic_search` with explicit opt-in and a local model option.
+3. ~~Optional: an embedding provider behind `semantic_search`.~~ Done: OpenAI-compatible endpoint, local by default, explicit remote opt-in, exclusions, incremental cache.
 4. Optional: OAuth for remote multi-user deployments.
 
 ## How to resume

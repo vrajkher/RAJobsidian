@@ -2,7 +2,7 @@
 
 An MCP server for Obsidian vaults. It searches, reads, and safely edits notes, canvases, and bases from ChatGPT, Codex, Claude, or any MCP client. It works with Obsidian closed, and uses the official Obsidian CLI, an optional local plugin, and Obsidian Headless when they are available.
 
-- **94 tools, plus resources and prompts.** Notes, attachments, links, tasks, templates, daily notes, Canvas, Bases, Sync, Publish, workspace, editor, commands, and plugins.
+- **95 tools, plus resources and prompts.** Notes, attachments, links, tasks, templates, daily notes, Canvas, Bases, Sync, Publish, workspace, editor, commands, and plugins.
 - **Safe by default.** Edits are previewed as diffs, checked against ETags, written atomically, backed up, and reversible. Deleting, publishing, plugin management, and code execution stay off until you enable them.
 - **Native ChatGPT experience** through [OpenAI MCP Extensions](https://github.com/openai/mcp-extensions): a sidebar vault browser, a thread notes tray, `.md`/`.canvas`/`.base` file viewers, deep links, structured settings, composer @-mentions, model context, and extended pick-a-note forms.
 - **Honest coverage.** See the [capability matrix](docs/CAPABILITY_MATRIX.md), which marks every feature as done, unverified, partial, or unsupported, with test evidence.

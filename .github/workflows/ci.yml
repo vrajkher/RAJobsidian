@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  python:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: uv sync
+      - run: uv run ruff check src tests
+      - run: uv run pytest -q
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: npm --prefix bridge-plugin ci && npm --prefix bridge-plugin run build
+      - run: npm --prefix app ci && npm --prefix app run build
+      - name: Built app is committed and up to date
+        run: git diff --exit-code src/obsidian_mcp/app/index.html bridge-plugin/main.js
+      - run: uv sync
+      - run: npm install -g playwright@1.56.1 && playwright install --with-deps chromium
+      - run: PLAYWRIGHT_PATH="$(npm root -g)/playwright" node app/test/e2e.mjs

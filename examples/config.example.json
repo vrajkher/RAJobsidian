@@ -1,0 +1,16 @@
+{
+  "vaults": [{ "id": "my-vault-1a2b3c", "name": "My Vault", "path": "/Users/me/Documents/My Vault" }],
+  "default_vault": "my-vault-1a2b3c",
+  "permissions": {
+    "write": true, "trash": true, "permanent_delete": false, "ui_control": true,
+    "settings_changes": false, "plugin_management": false, "publish": false, "sync_control": false,
+    "developer_tools": false, "eval_code": false, "headless": false, "community_plugins": true
+  },
+  "cli_path": null,
+  "bridge_url": "http://127.0.0.1:27125",
+  "bridge_token": null,
+  "backups_enabled": true,
+  "backups_keep": 50,
+  "max_read_bytes": 2000000,
+  "page_size": 50
+}

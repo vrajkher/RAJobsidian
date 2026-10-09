@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
 
 from obsidian_mcp.config import ConfigStore
 from obsidian_mcp.service import ObsidianService
+
+posix_only = pytest.mark.skipif(sys.platform == "win32", reason="uses /bin/sh fakes, symlinks or chmod")
 
 NOTES = {
     "Home.md": "---\ntags: [hub]\naliases: [Start]\n---\n# Home\nSee [[Projects/Plan]] and [[Ideas|my ideas]].\n"

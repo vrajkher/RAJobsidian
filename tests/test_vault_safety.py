@@ -6,6 +6,7 @@ import os
 import threading
 
 import pytest
+from conftest import posix_only
 
 from obsidian_mcp.errors import Code, ObsidianError
 
@@ -24,6 +25,7 @@ def test_rejects_paths_outside_vault(service, bad):
         service.write_note(None, bad, "x")
 
 
+@posix_only
 def test_symlink_escape_is_blocked(service, vault_dir, tmp_path):
     secret = tmp_path / "secret.md"
     secret.write_text("top secret")

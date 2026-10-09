@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from conftest import posix_only
 
 from obsidian_mcp import community
 from obsidian_mcp.adapters import cli as cli_mod
@@ -59,6 +60,7 @@ def test_cli_gates_before_running(service):
     assert exc.value.code == Code.PERMISSION_DENIED
 
 
+@posix_only
 def test_cli_runs_fake_binary(service, tmp_path):
     fake = tmp_path / "obsidian"
     fake.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
@@ -72,6 +74,7 @@ def test_cli_runs_fake_binary(service, tmp_path):
     assert exc.value.code == Code.CLI_ERROR
 
 
+@posix_only
 def test_confirmation_for_eval(service, tmp_path):
     fake = tmp_path / "obsidian"
     fake.write_text("#!/bin/sh\necho 42\n")
@@ -92,6 +95,7 @@ def test_bridge_must_be_localhost():
     assert exc.value.code == Code.ADAPTER_UNAVAILABLE
 
 
+@posix_only
 def test_headless_refuses_credentials_and_unknown(tmp_path):
     fake = tmp_path / "ob"
     fake.write_text("#!/bin/sh\necho ok\n")
@@ -107,6 +111,7 @@ def test_headless_refuses_credentials_and_unknown(tmp_path):
     assert h.run("sync-list-remote")["output"] == "ok"
 
 
+@posix_only
 def test_headless_publish_requires_permission_and_confirmation(service, tmp_path):
     fake = tmp_path / "ob"
     fake.write_text("#!/bin/sh\necho \"$@\"\n")
@@ -126,6 +131,7 @@ def test_headless_publish_requires_permission_and_confirmation(service, tmp_path
     assert "--yes" in done["output"]
 
 
+@posix_only
 def test_headless_sync_conflict_guard(service, vault_dir, tmp_path):
     fake = tmp_path / "ob"
     fake.write_text("#!/bin/sh\necho synced\n")
@@ -153,3 +159,22 @@ def test_capabilities_report(service):
     assert caps["filesystem"]["available"]
     assert caps["cli"]["available"] is False and "1.12.7" in caps["cli"]["requires"]
     assert caps["permissions"]["eval_code"] is False
+
+
+TYPED_WRAPPER_CALLS = [
+    ("commands", {"filter": "x"}, []), ("search:context", {"query": "q", "path": "F", "limit": 20, "format": "json"}, ["case"]),
+    ("base:query", {"path": "a.base", "view": "v", "format": "json"}, []),
+    ("base:create", {"path": "a.base", "view": "v", "name": "n", "content": "c"}, []),
+    ("history:read", {"path": "p", "version": 1}, []), ("sync:read", {"path": "p", "version": 1}, []),
+    ("diff", {"path": "p", "from": 1, "to": 2, "filter": "local"}, []), ("history:restore", {"path": "p", "version": 1}, []),
+    ("sync:restore", {"path": "p", "version": 1}, []), ("workspace", {}, ["ids"]), ("tabs", {}, ["ids"]),
+    ("workspace:save", {"name": "n"}, []), ("open", {"path": "p"}, ["newtab"]), ("publish:add", {"path": "p"}, ["changed"]),
+    ("publish:remove", {"path": "p"}, []), ("command", {"id": "x"}, []), ("eval", {"code": "1"}, []),
+    ("move", {"path": "a", "to": "b"}, []), ("sync:status", {}, []), ("sync:deleted", {}, []), ("publish:site", {}, []),
+    ("publish:list", {}, []), ("publish:status", {}, []), ("recents", {}, []), ("workspaces", {}, []),
+]
+
+
+@pytest.mark.parametrize(("command", "params", "flags"), TYPED_WRAPPER_CALLS)
+def test_typed_wrappers_match_official_cli_docs(command, params, flags):
+    cli_mod.CLIAdapter("/bin/obsidian").build_argv(command, params, flags)

@@ -1,0 +1,4 @@
+# ~/.codex/config.toml
+[mcp_servers.obsidian]
+command = "obsidian-mcp"
+args = ["serve"]

@@ -1,33 +1,48 @@
 # Implementation status (checkpoint)
 
-Last session: 2026-10-09. Work stopped partway through Phase 2 at the user's request.
+Last updated: 2026-10-09. All seven planned phases have a working implementation. See
+[docs/CAPABILITY_MATRIX.md](docs/CAPABILITY_MATRIX.md) for per-feature status and
+[docs/VERIFICATION.md](docs/VERIFICATION.md) for evidence.
 
 ## Done
-- **Research** (sources pinned):
-  - Obsidian help `obsidianmd/obsidian-help@b95e59d`: CLI, Headless, Sync, Publish, Bases, core plugins, Note composer, Templates
-  - Plugin API `obsidianmd/obsidian-api` 1.14.4: `app.commands` is **private**, so commands go through the CLI, not the bridge
-  - JSON Canvas spec 1.0
-  - `openai/mcp-extensions` spec + Python SDK 0.1.0 (needs MCP Python SDK 2.x: `MCPServer`, `mcp.server.apps`)
-- `scripts/gen_cli_catalog.py` → `src/obsidian_mcp/data/cli_catalog.json` (115 documented CLI commands with params and flags)
-- `errors.py`: stable error codes (subclasses ToolError so messages reach clients)
-- `config.py`: config store (0600, atomic) with permissions; risky permissions are off by default
-- `policy.py`: risk class for every CLI command, plus one-time confirmation tokens
-- `markdown.py`: frontmatter (ruamel round-trip), headings, block IDs, wikilinks/MD links/embeds, tags (incl. Gujarati/Hindi), tasks, footnotes, callouts, code/math masking, sections. Smoke-tested by hand.
-- `vault.py`: path confinement, atomic writes, ETag conflicts, newline/BOM preservation, backups outside the vault, `.trash`, restore, op log + rollback. **Untested.**
-- `index.py`: incremental index, link resolution, backlinks, unresolved links, orphans, dead ends, unlinked mentions, tags, properties, graph. **Untested.**
-- `search.py`: local query syntax, filters, snippets, pagination, TF-IDF related notes, duplicates. **Untested.**
-- `templates.py`: Moment.js formatting, template variables, daily/unique/composer settings. **Untested.**
 
-## Not started (next steps, in order)
-1. `edits.py`: patch ops (replace / insert under heading / replace section / replace block / line range), link rewriting on move/rename, Note composer merge/extract
-2. `tests/` with disposable vaults: path traversal, symlinks, Unicode, CRLF, ETag conflict, rollback, link rewrite
-3. `registry.py` (vault discovery + registration), `service.py`, `server.py` (MCPServer tools/resources/prompts, stdio + Streamable HTTP), `__main__.py`
-4. Phase 3: `adapters/cli.py` (catalog-validated, no shell), TypeScript bridge plugin (`bridge-plugin/`)
-5. Phase 4: `canvas.py`, `bases.py` (structure only; queries via CLI `base:query`), tasks, workspace
-6. Phase 5: OpenAI extensions (settings, mentions, global/thread/file entrypoints, resource writes with ETag), TS MCP App UI
-7. Phase 6–7: Headless `ob` wrapper, community adapter registry, docs/CAPABILITY_MATRIX.md, install scripts
+| Phase | Result |
+|---|---|
+| 1. Setup & matrix | uv project; CLI catalog generated from official docs (115 commands, `scripts/gen_cli_catalog.py`); capability matrix; CLI coverage table (`scripts/gen_cli_coverage.py`) |
+| 2. Vault core | Safe filesystem layer (confinement, atomic writes, ETags, backups, trash, op log, rollback); Markdown parser; incremental index; search; edits; 94-tool MCP server; stdio + HTTP |
+| 3. CLI & bridge | Catalog-validated CLI adapter with risk policy; TypeScript bridge plugin (public API only) + contract tests |
+| 4. Core plugins etc. | Every current core plugin mapped (data and/or native control); Canvas (JSON Canvas 1.0); Bases (structure + native query); tasks; templates; daily/unique/periodic notes; workspace |
+| 5. OpenAI extensions | Global/thread/file entrypoints, quick action, deep links, structured settings, onboarding skill, display modes, mentions, model context, messages, file opening, resource read/representation/subscriptions/writes, extended forms over MRTR; TS app with browser e2e |
+| 6. Headless & community | `ob` adapter (Sync/Publish, no credentials, conflict guard); registry for Dataview, Tasks, Templater, Periodic Notes |
+| 7. Verification & docs | 97 Python tests + browser e2e; README, user guide, architecture, troubleshooting, verification; install scripts; examples; CI (3 OSes) |
 
-## Known issues
-- `policy.CLI_READ_GATES` is unused; remove it.
-- The unique-note config file name `zk-prefixer.json` and its default format are assumed, not documented.
-- Nothing has been verified against a real Obsidian install yet.
+## Known gaps / unresolved
+
+- 🟡 Not yet run against a real Obsidian app, Sync/Publish account, Headless login, or ChatGPT host (see VERIFICATION.md, items 1–5).
+- Legacy (pre-2026) `openai/elicitation/create` path in `choose_notes` is untested: the SDK has no client for it.
+- No MCP progress notifications for long operations (CLI/Headless have timeouts).
+- Semantic search is local TF-IDF only; an external embedding provider is intentionally not implemented.
+- HTTP multi-user: one process per user; no OAuth.
+- The unique-note config file name/default and the attachment-folder key are undocumented assumptions with fallbacks.
+
+## Next steps (in order)
+
+1. Run VERIFICATION.md items 1–5 locally and record results in this file; fix anything that differs.
+2. Add MCP progress notifications for batch edits and Headless runs.
+3. Optional: an embedding provider behind `semantic_search` with explicit opt-in and a local model option.
+4. Optional: OAuth for remote multi-user deployments.
+
+## How to resume
+
+```sh
+uv sync && uv run pytest -q
+npm --prefix app ci && npm --prefix bridge-plugin ci
+```
+
+Regenerate the source-derived files after Obsidian docs change:
+
+```sh
+git clone --depth 1 https://github.com/obsidianmd/obsidian-help /tmp/obsidian-help
+uv run python scripts/gen_cli_catalog.py /tmp/obsidian-help
+uv run python scripts/gen_cli_coverage.py
+```

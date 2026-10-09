@@ -201,3 +201,49 @@ async def test_choose_images_uses_thumbnails(server, vault_dir):
         assert out.structured_content["status"] == "decline"
         option = seen["schema"]["properties"]["selection"]["oneOf"][0]
         assert option["x-openai-thumbnail"]["src"].startswith("data:image/png;base64,")
+
+
+async def test_resource_update_notifications_delivered(server, service):
+    import anyio
+    from mcp_types import ResourceUpdatedNotification
+
+    received: list[str] = []
+
+    async def on_message(message):
+        root = getattr(message, "root", message)
+        if isinstance(root, ResourceUpdatedNotification):
+            received.append(str(root.params.uri))
+
+    uri = f"obsidian://vault/{service.vault(None).id}/Ideas.md"
+    subs = server.subscriptions_manager
+    async with Client(server, mode="legacy", message_handler=on_message) as client:
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(subs.run, 0.05)
+            await client.subscribe_resource(uri)
+            await client.call_tool("append_note", {"path": "Ideas.md", "content": "changed via tool"})
+            with anyio.fail_after(5):
+                while uri not in received:
+                    await anyio.sleep(0.05)
+            received.clear()
+            (service.vault(None).root / "Ideas.md").write_text("changed outside (e.g. in Obsidian)")
+            with anyio.fail_after(5):
+                while uri not in received:
+                    await anyio.sleep(0.05)
+            tg.cancel_scope.cancel()
+
+
+async def test_listen_stream_receives_resource_updates(server, service):
+    import anyio
+
+    uri = f"obsidian://vault/{service.vault(None).id}/Ideas.md"
+    subs = server.subscriptions_manager
+    async with Client(server) as client, anyio.create_task_group() as tg:
+        tg.start_soon(subs.run, 0.05)
+        await client.call_tool("watch_note", {"path": "Ideas.md"})
+        async with client.listen(resource_subscriptions=[uri]) as sub:
+            await client.call_tool("append_note", {"path": "Ideas.md", "content": "x"})
+            with anyio.fail_after(5):
+                async for event in sub:
+                    if getattr(event, "uri", None) == uri:
+                        break
+        tg.cancel_scope.cancel()

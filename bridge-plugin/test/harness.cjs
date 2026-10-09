@@ -59,5 +59,10 @@ Module._load = function (request, ...rest) { return request === "obsidian" ? obs
 global.window = { setTimeout, clearTimeout };
 const PluginClass = require(path.join(__dirname, "..", "main.js")).default;
 const plugin = new PluginClass(app, { version: "test" });
-plugin.onload().then(() => { console.log("READY"); });
+plugin.onload().then(() => {
+  // server.listen() is asynchronous: only report readiness once the port accepts connections.
+  const server = plugin.server;
+  if (server.listening) console.log("READY");
+  else server.once("listening", () => console.log("READY"));
+});
 setTimeout(() => vault.trigger("modify", files.get("Note.md")), 300);

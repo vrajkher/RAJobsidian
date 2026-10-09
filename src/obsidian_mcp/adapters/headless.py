@@ -9,8 +9,12 @@ enabled, unless the caller explicitly overrides.
 
 from __future__ import annotations
 
+import queue
 import shutil
 import subprocess
+import threading
+import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +56,8 @@ class HeadlessAdapter:
         return self.binary is not None
 
     def run(self, command: str, options: dict[str, Any] | None = None, flags: list[str] | None = None,
-            timeout: float | None = None) -> dict[str, Any]:
+            timeout: float | None = None, on_line: Callable[[int, str], None] | None = None,
+            cancelled: Callable[[], bool] | None = None) -> dict[str, Any]:
         if not self.available:
             raise ObsidianError(Code.ADAPTER_UNAVAILABLE, "Obsidian Headless ('ob') was not found.",
                                 hint="Install Node.js 22+, run 'npm install -g obsidian-headless', "
@@ -77,14 +82,61 @@ class HeadlessAdapter:
             if opt not in allowed:
                 raise ObsidianError(Code.INVALID_ARGUMENT, f"'ob {command}' has no flag {opt}.")
             argv.append(opt)
-        try:
-            proc = subprocess.run(argv, capture_output=True, timeout=timeout or self.timeout,
-                                  stdin=subprocess.DEVNULL, check=False)
-        except subprocess.TimeoutExpired as exc:
-            raise ObsidianError(Code.TIMEOUT, f"'ob {command}' timed out.") from exc
-        out = proc.stdout.decode("utf-8", errors="replace")[:200_000]
-        err = proc.stderr.decode("utf-8", errors="replace")[:20_000]
-        if proc.returncode != 0:
+        out, err, returncode = _stream(argv, timeout or self.timeout, on_line, cancelled, command)
+        if returncode != 0:
             hint = "Run 'ob login' in your terminal." if "login" in (out + err).lower() else None
             raise ObsidianError(Code.HEADLESS_ERROR, (err.strip() or out.strip() or "failed")[:2000], hint=hint)
         return {"command": f"ob {command}", "output": out.strip(), "stderr": err.strip() or None}
+
+
+MAX_OUT = 200_000
+
+
+def _stream(argv: list[str], timeout: float, on_line: Callable[[int, str], None] | None,
+            cancelled: Callable[[], bool] | None, command: str) -> tuple[str, str, int]:
+    """Run ``ob``, forwarding stdout lines as they arrive; kill it on timeout or cancellation."""
+    proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+    lines: queue.Queue[tuple[str, str | None]] = queue.Queue()
+
+    def pump(name: str, stream: Any) -> None:
+        for raw in iter(stream.readline, b""):
+            lines.put((name, raw.decode("utf-8", errors="replace")))
+        lines.put((name, None))
+
+    for name, stream in (("out", proc.stdout), ("err", proc.stderr)):
+        threading.Thread(target=pump, args=(name, stream), daemon=True).start()
+    out: list[str] = []
+    err: list[str] = []
+    open_streams = 2
+    deadline = time.monotonic() + timeout
+    count = 0
+    try:
+        while open_streams:
+            if cancelled and cancelled():
+                proc.kill()
+                proc.wait()
+                raise ObsidianError(Code.TIMEOUT, f"'ob {command}' was cancelled; the process was stopped.")
+            if time.monotonic() > deadline:
+                proc.kill()
+                proc.wait()
+                raise ObsidianError(Code.TIMEOUT, f"'ob {command}' timed out.")
+            try:
+                name, line = lines.get(timeout=0.2)
+            except queue.Empty:
+                continue
+            if line is None:
+                open_streams -= 1
+                continue
+            if name == "out":
+                out.append(line)
+                count += 1
+                if on_line and line.strip():
+                    on_line(count, line.strip())
+            else:
+                err.append(line)
+    finally:
+        if proc.poll() is None:  # any exit path, including errors in callbacks, stops the process
+            proc.kill()
+            proc.wait()
+    returncode = proc.wait()
+    return "".join(out)[:MAX_OUT], "".join(err)[:20_000], returncode

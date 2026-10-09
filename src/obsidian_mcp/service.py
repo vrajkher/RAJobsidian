@@ -19,6 +19,7 @@ import posixpath
 import random
 import re
 import threading
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -34,6 +35,7 @@ from .config import ConfigStore
 from .errors import Code, ObsidianError
 from .index import VaultIndex
 from .policy import CONFIRM_RISKS, Policy, Risk, cli_risk
+from .progress import Progress, no_progress
 from .registry import VaultRegistry, discover
 from .search import RelatedNotes, duplicates, search
 from .vault import TRASH_DIR, Vault, etag_of, file_kind, mime_of, normalize_rel, unified_diff
@@ -457,7 +459,8 @@ class ObsidianService:
         return {"folder": folder, "setting": setting, "source": "app.json" if app else "default (vault root)"}
 
     def batch(self, vault: str | None, operations: list[dict[str, Any]], *, dry_run: bool = True,
-              atomic: bool = True) -> dict[str, Any]:
+              atomic: bool = True, progress: Progress = no_progress,
+              cancelled: Callable[[], bool] = lambda: False) -> dict[str, Any]:
         """Run several edits. With atomic=true, a failure rolls back the earlier items."""
         handlers = {
             "write_note": self.write_note, "append_note": self.append_note, "prepend_note": self.prepend_note,
@@ -468,7 +471,13 @@ class ObsidianService:
         results: list[dict[str, Any]] = []
         done_ops: list[str] = []
         v = self.vault(vault)
+        total = len(operations)
         for i, op in enumerate(operations):
+            if cancelled():
+                rolled = [v.rollback(o, force=True) for o in reversed(done_ops)] if atomic and not dry_run else []
+                return {"status": "cancelled", "completed": i, "results": results,
+                        "rolled_back": [r["rolled_back"] for r in rolled]}
+            progress(i, total, f"{op.get('action', '?')} {op.get('path', '')}".strip())
             op = dict(op)
             name = op.pop("action", None)
             handler = handlers.get(name or "")
@@ -503,6 +512,7 @@ class ObsidianService:
                     rolled = [v.rollback(o, force=True) for o in reversed(done_ops)] if not dry_run else []
                     return {"status": "failed", "failed_index": i, "results": results,
                             "rolled_back": [r["rolled_back"] for r in rolled]}
+        progress(total, total, "done")
         ok = all(r["status"] == "ok" for r in results)
         return {"status": "ok" if ok else "partial", "dry_run": dry_run, "results": results,
                 "operation_ids": done_ops}
@@ -1039,7 +1049,8 @@ class ObsidianService:
     # Headless ------------------------------------------------------------------------------------
     def headless_run(self, vault: str | None, command: str, options: dict[str, Any] | None = None,
                      flags: list[str] | None = None, confirm_token: str | None = None,
-                     allow_desktop_sync_conflict: bool = False) -> dict[str, Any]:
+                     allow_desktop_sync_conflict: bool = False, progress: Progress = no_progress,
+                     cancelled: Callable[[], bool] = lambda: False) -> dict[str, Any]:
         self.policy.require(Risk.HEADLESS, "Obsidian Headless")
         options = dict(options or {})
         flags = list(flags or [])
@@ -1071,4 +1082,5 @@ class ObsidianService:
                 command in ("sync-config", "publish-config", "publish-site-options")
                 and (options.keys() - {"path"} or flags)):
             self.policy.require(Risk.SETTINGS, f"'ob {command}'")
-        return self.headless.run(command, options, flags)
+        return self.headless.run(command, options, flags, on_line=lambda n, line: progress(n, None, line[:200]),
+                                 cancelled=cancelled)

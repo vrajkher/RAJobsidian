@@ -170,5 +170,5 @@ Optional official plugins:
 | Concurrency (per-vault locks, ETags), safe retries (idempotent reads) | ✅ | concurrency test |
 | Secret redaction (`bridge_token` never echoed; config 0600) | ✅ | `public_dict` |
 | Prompt-injection stance (note content is data; permissions not model-changeable) | ✅ design | instructions, settings exclusions |
-| Cancellation / timeouts / progress | 🟠 | CLI/Headless timeouts implemented; no progress notifications yet |
+| Cancellation / timeouts / progress | ✅ | `tests/test_progress.py`: `batch_edit` and `headless` send `notifications/progress`; cancelling stops the work (batch rolls back atomically; the `ob` process is killed). CLI/Headless timeouts. |
 | Per-user isolation over HTTP | 🟠 | One process per user (`OBSIDIAN_MCP_HOME`); no multi-tenant OAuth |

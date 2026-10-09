@@ -55,7 +55,7 @@ from openai_mcp_extensions import (
 )
 from pydantic import BaseModel, Field
 
-from . import __version__
+from . import __version__, progress
 from .errors import Code, ObsidianError
 from .policy import Risk
 from .service import ObsidianService
@@ -531,9 +531,12 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
     def batch_edit(operations: Annotated[list[dict[str, Any]], Field(description=(
             "Items like {action:'append_note', path, content}. Actions: write_note, append_note, prepend_note, "
             "patch_note, set_properties, move_file, rename_file, copy_file, create_folder, trash_file."))],
-                   vault: VaultArg = None, dry_run: bool = True, atomic: bool = True) -> dict[str, Any]:
-        """Several edits with per-item results. Previews by default; atomic=true undoes all on any failure."""
-        return svc.batch(vault, operations, dry_run=dry_run, atomic=atomic)
+                   ctx: Context[Any, Any], vault: VaultArg = None, dry_run: bool = True,
+                   atomic: bool = True) -> dict[str, Any]:
+        """Several edits with per-item results and progress. Previews by default; atomic=true undoes all on
+        any failure or cancellation."""
+        return svc.batch(vault, operations, dry_run=dry_run, atomic=atomic, progress=progress.reporter(ctx),
+                         cancelled=progress.cancel_checker())
 
     @tool("list_operations", "Recent operations", READ)
     def list_operations(vault: VaultArg = None, limit: int = 20) -> dict[str, Any]:
@@ -946,10 +949,12 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
             "sync-list-remote, sync-list-local, sync-status, sync, sync-config, sync-setup, sync-unlink, "
             "publish-list-sites, publish (use flags ['dry-run'] to preview), publish-config, "
             "publish-site-options, publish-setup, publish-unlink"))],
-                 vault: VaultArg = None, options: dict[str, Any] | None = None, flags: list[str] | None = None,
-                 confirm_token: str | None = None, allow_desktop_sync_conflict: bool = False) -> dict[str, Any]:
-        """Sync/Publish without the desktop app via 'ob' (open beta). Never handles passwords."""
-        return svc.headless_run(vault, command, options, flags, confirm_token, allow_desktop_sync_conflict)
+                 ctx: Context[Any, Any], vault: VaultArg = None, options: dict[str, Any] | None = None,
+                 flags: list[str] | None = None, confirm_token: str | None = None,
+                 allow_desktop_sync_conflict: bool = False) -> dict[str, Any]:
+        """Sync/Publish without the desktop app via 'ob' (open beta). Streams progress; never handles passwords."""
+        return svc.headless_run(vault, command, options, flags, confirm_token, allow_desktop_sync_conflict,
+                                progress=progress.reporter(ctx), cancelled=progress.cancel_checker())
 
     # ---- Resources ---------------------------------------------------------------------------------
     @server.resource("obsidian://capabilities", name="capabilities", title="Capabilities",

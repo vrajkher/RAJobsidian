@@ -193,7 +193,8 @@ class SubscriptionManager:
                 await self.publish(uri)
 
 
-def build_server(service: ObsidianService | None = None) -> MCPServer:
+def build_server(service: ObsidianService | None = None, *, auth: Any = None,
+                 token_verifier: Any = None) -> MCPServer:
     svc = service or ObsidianService()
     apps = Apps()
     openai = OpenAIExtensions()
@@ -232,6 +233,7 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
 
     @settings.update
     def _update_settings(set: dict[str, Any], context: Context[Any, Any]) -> Preferences:  # noqa: A002
+        svc.require_admin("Changing server settings")
         changes: dict[str, Any] = {}
         for key, value in set.items():
             if key == "default_vault":
@@ -364,6 +366,8 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
         icons=ICONS,
         extensions=[apps, openai, settings],
         middleware=[settings.advertise_legacy_capability],
+        auth=auth,
+        token_verifier=token_verifier,
     )
     subs = SubscriptionManager(svc, server)
     svc.listeners.append(subs.on_change)
@@ -1024,7 +1028,8 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
 
     async def subscribe(ctx: Any, params: SubscribeRequestParams) -> EmptyResult:
         uri = str(params.uri)
-        parse_uri(uri)
+        vault_id, _ = parse_uri(uri)
+        await anyio.to_thread.run_sync(svc.vault, vault_id)  # enforces per-user vault access
         subs.add(uri, ctx.session)
         return EmptyResult()
 
@@ -1077,6 +1082,10 @@ def svc_vault_for_path(svc: ObsidianService, abs_path: str) -> tuple[str, str] |
     except OSError:
         return None
     for e in svc.registry.entries:
+        try:
+            svc.vault(e.id)  # skip vaults the current user may not access
+        except ObsidianError:
+            continue
         root = Path(e.path).resolve()
         if root in real.parents:
             rel = real.relative_to(root).as_posix()

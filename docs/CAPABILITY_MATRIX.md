@@ -171,4 +171,4 @@ Optional official plugins:
 | Secret redaction (`bridge_token` never echoed; config 0600) | ✅ | `public_dict` |
 | Prompt-injection stance (note content is data; permissions not model-changeable) | ✅ design | instructions, settings exclusions |
 | Cancellation / timeouts / progress | ✅ | `tests/test_progress.py`: `batch_edit` and `headless` send `notifications/progress`; cancelling stops the work (batch rolls back atomically; the `ob` process is killed). CLI/Headless timeouts. |
-| Per-user isolation over HTTP | 🟠 | One process per user (`OBSIDIAN_MCP_HOME`); no multi-tenant OAuth |
+| Per-user isolation over HTTP (OAuth 2.1 resource server) | ✅ | `tests/test_oauth.py`: RFC 7662 introspection (fail-closed, audience-checked), protected-resource metadata, per-user vault allow-lists, admin-only changes, read-only tokens; real HTTP end-to-end |

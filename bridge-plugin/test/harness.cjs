@@ -65,4 +65,6 @@ plugin.onload().then(() => {
   if (server.listening) console.log("READY");
   else server.once("listening", () => console.log("READY"));
 });
-setTimeout(() => vault.trigger("modify", files.get("Note.md")), 300);
+// Capture the file object now: the test may rename it before this timer fires.
+const initialNote = files.get("Note.md");
+setTimeout(() => vault.trigger("modify", initialNote), 300);

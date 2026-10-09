@@ -31,6 +31,7 @@ from . import templates as tpl
 from .adapters import cli as cli_mod
 from .adapters import headless as headless_mod
 from .adapters.bridge import BridgeAdapter
+from .auth import allowed_vaults, current_principal, is_admin
 from .config import ConfigStore
 from .errors import Code, ObsidianError
 from .index import VaultIndex
@@ -56,6 +57,7 @@ class ObsidianService:
         self.store = store or ConfigStore()
         self.registry = VaultRegistry(self.store)
         self.policy = Policy(self.store.config.permissions)
+        self.policy.scope_check = self._check_write_scope
         self._indexes: dict[str, VaultIndex] = {}
         self._related: dict[str, RelatedNotes] = {}
         self._semantic: dict[str, SemanticIndex] = {}
@@ -80,7 +82,40 @@ class ObsidianService:
         return headless_mod.HeadlessAdapter(headless_mod.find_binary(self.config.headless_path))
 
     def vault(self, ref: str | None) -> Vault:
-        return self.registry.get(ref)
+        """Resolve a vault, enforcing per-user access when an OAuth principal is present."""
+        principal = current_principal()
+        if principal is None:
+            return self.registry.get(ref)
+        allowed = allowed_vaults(self.config, principal)
+        if allowed is None:
+            return self.registry.get(ref)
+        permitted = [e for e in self.registry.entries if e.id in allowed or e.name in allowed]
+        if ref is None:
+            default = next((e for e in permitted if e.id == self.config.default_vault), None)
+            if default is None and len(permitted) == 1:
+                default = permitted[0]
+            if default is None:
+                raise ObsidianError(Code.NO_VAULT, "Say which vault to use.",
+                                    vaults=[e.name for e in permitted])
+            return self.registry.get(default.id)
+        entry = next((e for e in permitted if ref in (e.id, e.name) or e.name.lower() == ref.lower()), None)
+        if entry is None:
+            # Same message as a missing vault, so vault names of other users are not revealed.
+            raise ObsidianError(Code.VAULT_NOT_FOUND, f"No connected vault named {ref!r}.",
+                                hint="Call list_vaults.", vaults=[e.name for e in permitted])
+        return self.registry.get(entry.id)
+
+    def _check_write_scope(self, risk: Risk, action: str) -> None:
+        principal = current_principal()
+        scope = self.config.oauth_write_scope
+        if principal is not None and scope and risk is not Risk.READ and scope not in principal.scopes:
+            raise ObsidianError(Code.PERMISSION_DENIED, f"{action} needs the '{scope}' scope; this token is read-only.")
+
+    def require_admin(self, action: str) -> None:
+        """Multi-user (OAuth) mode: host-level actions are for admins only. No-op locally."""
+        if not is_admin(self.config, current_principal()):
+            raise ObsidianError(Code.PERMISSION_DENIED, f"{action} is limited to server administrators.",
+                                hint="These actions control the host computer's Obsidian app, not your vault copy.")
 
     def index(self, vault: Vault) -> VaultIndex:
         with self._lock:
@@ -99,8 +134,15 @@ class ObsidianService:
 
     # Vaults -------------------------------------------------------------------------------
     def list_vaults(self, include_discovered: bool = True) -> dict[str, Any]:
+        principal = current_principal()
+        entries = self.registry.entries
+        if principal is not None:
+            allowed = allowed_vaults(self.config, principal)
+            if allowed is not None:
+                entries = [e for e in entries if e.id in allowed or e.name in allowed]
+            include_discovered = include_discovered and is_admin(self.config, principal)
         connected = [{"id": e.id, "name": e.name, "path": e.path,
-                      "default": e.id == self.config.default_vault} for e in self.registry.entries]
+                      "default": e.id == self.config.default_vault} for e in entries]
         result: dict[str, Any] = {"connected": connected}
         if include_discovered and self.config.discover_obsidian_vaults:
             known = {c["path"] for c in connected}
@@ -110,6 +152,7 @@ class ObsidianService:
         return result
 
     def connect_vault(self, path: str, name: str | None = None, make_default: bool = False) -> dict[str, Any]:
+        self.require_admin("Connecting vaults")
         entry = self.registry.register(path, name, make_default)
         vault = self.vault(entry.id)
         is_obsidian = (vault.root / vault.config_dir).is_dir()
@@ -120,11 +163,13 @@ class ObsidianService:
                 "capabilities": self.capabilities(entry.id)}
 
     def disconnect_vault(self, vault: str) -> dict[str, Any]:
+        self.require_admin("Disconnecting vaults")
         entry = self.registry.unregister(vault)
         self._indexes.pop(entry.id, None)
         return {"disconnected": entry.name, "files_untouched": True}
 
     def set_default_vault(self, vault: str) -> dict[str, Any]:
+        self.require_admin("Changing the default vault")
         entry = self.registry.entry(vault)
         self.store.update(default_vault=entry.id)
         return {"default_vault": entry.name}
@@ -324,6 +369,7 @@ class ObsidianService:
         if v.exists(dst):
             raise ObsidianError(Code.ALREADY_EXISTS, f"{dst!r} already exists.")
         use_bridge = adapter == "bridge" or (adapter == "auto" and update_links and src_path.is_file()
+                                             and is_admin(self.config, current_principal())
                                              and self.bridge.configured and self.bridge.status() is not None)
         if adapter == "cli":
             if dry_run:
@@ -331,6 +377,7 @@ class ObsidianService:
                         "note": "Obsidian updates links according to its 'Automatically update internal links' "
                                 "setting; no preview is available."}
             self._write_guard()
+            self.require_admin("Controlling the Obsidian app (CLI)")
             out = self.cli.run("move", {"path": src, "to": dst}, vault=v.name)
             self._changed(v, src, dst)
             return {"from": src, "to": dst, "adapter": "cli", "output": out["output"]}
@@ -339,6 +386,7 @@ class ObsidianService:
                 return {"dry_run": True, "adapter": "bridge", "from": src, "to": dst,
                         "note": "Obsidian's FileManager.renameFile updates links per the user's settings."}
             self._write_guard()
+            self.require_admin("Controlling the Obsidian app (bridge)")
             self.bridge.call("POST", "/file/rename", {"path": src, "newPath": dst})
             self._changed(v, src, dst)
             return {"from": src, "to": dst, "adapter": "bridge", "links": "updated by Obsidian"}
@@ -387,6 +435,7 @@ class ObsidianService:
         norm = normalize_rel(path) if v.exists(path) else self._resolve_note_path(v, path)
         backlinks = self.index(v).backlinks(norm) if norm.endswith(".md") else []
         if adapter == "bridge":
+            self.require_admin("Controlling the Obsidian app (bridge)")
             self.bridge.call("POST", "/file/trash", {"path": norm})
             result: dict[str, Any] = {"path": norm, "adapter": "bridge",
                                       "detail": "Trashed according to Obsidian's 'Deleted files' setting."}
@@ -1012,6 +1061,7 @@ class ObsidianService:
                 "base_theme": appearance.get("theme")}
 
     def write_snippet(self, vault: str | None, name: str, css: str) -> dict[str, Any]:
+        self.require_admin("Writing CSS snippets")
         self.policy.require(Risk.SETTINGS, "Writing CSS snippets")
         if not re.fullmatch(r"[\w .-]{1,80}", name):
             raise ObsidianError(Code.INVALID_ARGUMENT, "Snippet name may contain letters, digits, space, . _ -")
@@ -1033,6 +1083,7 @@ class ObsidianService:
 
     def cli_run(self, vault: str | None, command: str, params: dict[str, Any] | None = None,
                 flags: list[str] | None = None, confirm_token: str | None = None) -> dict[str, Any]:
+        self.require_admin("Controlling the Obsidian app (CLI)")
         params = {k: v for k, v in (params or {}).items() if v is not None}
         flags = list(flags or [])
         risk = cli_risk(command, params, flags)
@@ -1054,6 +1105,7 @@ class ObsidianService:
     # Bridge ------------------------------------------------------------------------------------
     def bridge_call(self, method: str, path: str, body: dict[str, Any] | None = None,
                     query: dict[str, Any] | None = None, risk: Risk = Risk.READ) -> Any:
+        self.require_admin("Controlling the Obsidian app (bridge)")
         self.policy.require(risk, f"Bridge {path}")
         result = self.bridge.call(method, path, body, query)
         if risk is not Risk.READ:
@@ -1066,6 +1118,7 @@ class ObsidianService:
                      flags: list[str] | None = None, confirm_token: str | None = None,
                      allow_desktop_sync_conflict: bool = False, progress: Progress = no_progress,
                      cancelled: Callable[[], bool] = lambda: False) -> dict[str, Any]:
+        self.require_admin("Obsidian Headless")
         self.policy.require(Risk.HEADLESS, "Obsidian Headless")
         options = dict(options or {})
         flags = list(flags or [])

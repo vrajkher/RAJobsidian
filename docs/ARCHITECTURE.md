@@ -62,7 +62,7 @@
 ## Security model
 
 - Paths are normalized and resolved; anything outside the vault root (including through symlinks) is rejected. Hidden folders are not content.
-- HTTP transport requires a bearer token (a random one is generated if unset). `--no-auth` is allowed only on localhost.
+- HTTP transport requires a bearer token (a random one is generated if unset). `--no-auth` is allowed only on localhost. For multiple users, OAuth mode validates tokens from your authorization server by introspection. Per-user vault allow-lists are enforced in `ObsidianService.vault()`, the single choke point for every tool and resource read.
 - The bridge binds 127.0.0.1, requires a 256-bit token, and rejects browser `Origin` headers and non-localhost `Host` headers (DNS rebinding).
 - Headless never receives credentials. `ob login` is interactive in the user's terminal.
 - Host file paths from OpenAI file entrypoints grant vault features only when they fall inside a connected vault, and never inside hidden folders.

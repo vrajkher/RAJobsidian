@@ -110,7 +110,7 @@ async def test_mentions_and_entrypoints_accept_empty_args(server):
 
 async def test_file_entrypoint_does_not_grant_access_outside_vaults(server, tmp_path):
     outside = tmp_path / "elsewhere.md"
-    outside.write_text("x")
+    outside.write_text("x", encoding="utf-8")
     async with Client(server) as client:
         res = await client.call_tool("open_obsidian_file", {"file": {"name": "elsewhere.md",
                                                                      "resourceUri": "host-resource://1"}},
@@ -225,7 +225,7 @@ async def test_resource_update_notifications_delivered(server, service):
                 while uri not in received:
                     await anyio.sleep(0.05)
             received.clear()
-            (service.vault(None).root / "Ideas.md").write_text("changed outside (e.g. in Obsidian)")
+            (service.vault(None).root / "Ideas.md").write_bytes(b"changed outside (e.g. in Obsidian)")
             with anyio.fail_after(5):
                 while uri not in received:
                     await anyio.sleep(0.05)

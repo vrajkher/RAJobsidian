@@ -28,19 +28,19 @@ def test_rename_updates_wikilinks_and_markdown_links(service, vault_dir):
     assert preview["dry_run"] and preview["link_updates"]
     assert (vault_dir / "Projects/Plan.md").exists()
     out = service.rename_file(None, "Projects/Plan.md", "Roadmap")
-    home = (vault_dir / "Home.md").read_text()
+    home = (vault_dir / "Home.md").read_text(encoding="utf-8")
     assert "[[Projects/Roadmap]]" in home  # path-style link keeps its style
     assert "](Projects/Roadmap.md#Goals)" in home
     assert "[[Ideas|my ideas]]" in home  # untouched link keeps alias
     assert home.startswith("---\ntags: [hub]")  # frontmatter untouched
     service.rollback(None, out["operation_id"])
     assert (vault_dir / "Projects/Plan.md").exists()
-    assert "[[Projects/Plan]]" in (vault_dir / "Home.md").read_text()
+    assert "[[Projects/Plan]]" in (vault_dir / "Home.md").read_text(encoding="utf-8")
 
 
 def test_move_folder_updates_links(service, vault_dir):
     service.move_file(None, "Projects", "Archive/Projects")
-    home = (vault_dir / "Home.md").read_text()
+    home = (vault_dir / "Home.md").read_text(encoding="utf-8")
     assert "Archive/Projects/Plan" in home
     assert (vault_dir / "Archive/Projects/Other.md").exists()
 
@@ -72,11 +72,11 @@ def test_tags_properties_and_metadata(service):
 
 def test_set_properties_keeps_body(service, vault_dir):
     service.set_properties(None, "Home.md", {"status": "draft", "rating": 5}, remove=["aliases"])
-    text = (vault_dir / "Home.md").read_text()
+    text = (vault_dir / "Home.md").read_text(encoding="utf-8")
     assert "status: draft" in text and "aliases" not in text
     assert text.split("---\n", 2)[2].startswith("# Home\nSee [[Projects/Plan]]")
     service.set_properties(None, "Orphan.md", {"new": True})
-    assert (vault_dir / "Orphan.md").read_text() == "---\nnew: true\n---\nnobody links here\n"
+    assert (vault_dir / "Orphan.md").read_text(encoding="utf-8") == "---\nnew: true\n---\nnobody links here\n"
 
 
 def test_patch_ops(service, vault_dir):
@@ -85,12 +85,12 @@ def test_patch_ops(service, vault_dir):
         {"op": "replace_section", "heading": "Notes", "content": "New notes"},
         {"op": "replace", "find": "# Plan", "replace": "# The Plan"},
     ])
-    text = (vault_dir / "Projects/Plan.md").read_text()
+    text = (vault_dir / "Projects/Plan.md").read_text(encoding="utf-8")
     assert text == "# The Plan\n## Goals\nGoal text\n- added goal\n## Notes\nNew notes\n"
     with pytest.raises(ObsidianError):
         service.patch_note(None, "Projects/Plan.md", [{"op": "insert", "heading": "Nope", "content": "x"}])
     service.patch_note(None, "Ideas.md", [{"op": "replace_block", "block_id": "task1", "content": "- [ ] new"}])
-    assert "- [ ] new ^task1" in (vault_dir / "Ideas.md").read_text()
+    assert "- [ ] new ^task1" in (vault_dir / "Ideas.md").read_text(encoding="utf-8")
 
 
 def test_tasks(service, vault_dir):
@@ -98,7 +98,7 @@ def test_tasks(service, vault_dir):
     done = [t for t in tasks["items"] if t["status"] == "x"][0]
     assert done["tasks_plugin"] == {"due": "2026-01-02", "priority": "high"}
     service.set_task_status(None, "Ideas.md", 2, "x", expected_text="write docs")
-    assert "- [x] write docs" in (vault_dir / "Ideas.md").read_text()
+    assert "- [x] write docs" in (vault_dir / "Ideas.md").read_text(encoding="utf-8")
     with pytest.raises(ObsidianError):
         service.set_task_status(None, "Ideas.md", 1, "x")
 
@@ -107,20 +107,20 @@ def test_merge_and_extract(service, vault_dir):
     preview = service.merge_notes(None, "Projects/Other.md", "Projects/Plan.md")
     assert preview["dry_run"]
     service.merge_notes(None, "Projects/Other.md", "Projects/Plan.md", dry_run=False)
-    assert "Link to [[Missing Note]]" in (vault_dir / "Projects/Plan.md").read_text()
+    assert "Link to [[Missing Note]]" in (vault_dir / "Projects/Plan.md").read_text(encoding="utf-8")
     assert not (vault_dir / "Projects/Other.md").exists()
     service.extract_note(None, "Projects/Plan.md", "Goals note", heading="Goals", dry_run=False)
-    assert (vault_dir / "Goals note.md").read_text().startswith("## Goals\nGoal text")
-    assert "[[Goals note]]" in (vault_dir / "Projects/Plan.md").read_text()
+    assert (vault_dir / "Goals note.md").read_text(encoding="utf-8").startswith("## Goals\nGoal text")
+    assert "[[Goals note]]" in (vault_dir / "Projects/Plan.md").read_text(encoding="utf-8")
 
 
 def test_link_notes_and_repair(service, vault_dir):
     service.link_notes(None, "Orphan.md", "Ideas.md", text="See")
-    assert (vault_dir / "Orphan.md").read_text().endswith("See [[Ideas]]")
+    assert (vault_dir / "Orphan.md").read_text(encoding="utf-8").endswith("See [[Ideas]]")
     sugg = service.repair_links(None)
     assert sugg["unresolved"] == 1
     service.repair_links(None, {"Missing Note": "Orphan.md"}, dry_run=False)
-    assert "[[Orphan]]" in (vault_dir / "Projects/Other.md").read_text()
+    assert "[[Orphan]]" in (vault_dir / "Projects/Other.md").read_text(encoding="utf-8")
 
 
 def test_duplicates_and_related(service):
@@ -133,7 +133,7 @@ def test_duplicates_and_related(service):
 
 def test_daily_and_unique_and_templates(service, vault_dir):
     (vault_dir / "Templates").mkdir()
-    (vault_dir / "Templates/Day.md").write_text("# {{title}}\nCreated {{date:dddd, MMMM Do YYYY}} {{custom}}\n")
+    (vault_dir / "Templates/Day.md").write_bytes(b"# {{title}}\nCreated {{date:dddd, MMMM Do YYYY}} {{custom}}\n")
     daily = service.daily_note(None, "2026-03-05")
     assert daily["path"] == "Daily/2026-03-05.md" and daily["created"]
     again = service.daily_note(None, "2026-03-05")
@@ -142,7 +142,7 @@ def test_daily_and_unique_and_templates(service, vault_dir):
     assert out["content"].startswith("# T\nCreated Thursday, March 5th 2026")
     assert out["unresolved_variables"] == ["{{custom}}"]
     uniq = service.unique_note(None, "hello")
-    assert (vault_dir / uniq["path"]).read_text() == "hello"
+    assert (vault_dir / uniq["path"]).read_text(encoding="utf-8") == "hello"
 
 
 def test_moment_tokens():
@@ -187,4 +187,4 @@ def test_bases_structure(service, vault_dir):
 
 def test_rename_bare_wikilink_keeps_alias_and_short_form(service, vault_dir):
     service.rename_file(None, "Ideas.md", "Concepts")
-    assert "[[Concepts|my ideas]]" in (vault_dir / "Home.md").read_text()
+    assert "[[Concepts|my ideas]]" in (vault_dir / "Home.md").read_text(encoding="utf-8")

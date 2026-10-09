@@ -28,7 +28,7 @@ def test_rejects_paths_outside_vault(service, bad):
 @posix_only
 def test_symlink_escape_is_blocked(service, vault_dir, tmp_path):
     secret = tmp_path / "secret.md"
-    secret.write_text("top secret")
+    secret.write_text("top secret", encoding="utf-8")
     os.symlink(secret, vault_dir / "link.md")
     os.symlink(tmp_path, vault_dir / "outside")
     with pytest.raises(ObsidianError) as exc:
@@ -84,11 +84,11 @@ def test_create_refuses_overwrite_without_flag(service):
 
 
 def test_backup_and_rollback(service, vault_dir):
-    before = (vault_dir / "Ideas.md").read_text()
+    before = (vault_dir / "Ideas.md").read_text(encoding="utf-8")
     res = service.write_note(None, "Ideas.md", "replaced", overwrite=True)
     assert res["backup_id"]
     service.rollback(None, res["operation_id"])
-    assert (vault_dir / "Ideas.md").read_text() == before
+    assert (vault_dir / "Ideas.md").read_text(encoding="utf-8") == before
 
 
 def test_rollback_refuses_after_later_edit(service, vault_dir):
@@ -96,7 +96,7 @@ def test_rollback_refuses_after_later_edit(service, vault_dir):
     service.write_note(None, "Ideas.md", "v3", overwrite=True)
     out = service.rollback(None, res["operation_id"])
     assert out["results"][0]["status"] == "conflict"
-    assert (vault_dir / "Ideas.md").read_text() == "v3"
+    assert (vault_dir / "Ideas.md").read_text(encoding="utf-8") == "v3"
 
 
 def test_trash_restore_and_permanent_delete_flow(service, vault_dir):
@@ -148,17 +148,17 @@ def test_concurrent_conditional_writes_one_wins(service):
 
 
 def test_batch_atomic_rolls_back(service, vault_dir):
-    before = (vault_dir / "Ideas.md").read_text()
+    before = (vault_dir / "Ideas.md").read_text(encoding="utf-8")
     out = service.batch(None, [
         {"action": "append_note", "path": "Ideas.md", "content": "batched"},
         {"action": "patch_note", "path": "Ideas.md", "ops": [{"op": "replace", "find": "NOPE", "replace": "x"}]},
     ], dry_run=False, atomic=True)
     assert out["status"] == "failed" and out["rolled_back"]
-    assert (vault_dir / "Ideas.md").read_text() == before
+    assert (vault_dir / "Ideas.md").read_text(encoding="utf-8") == before
 
 
 def test_batch_preview_changes_nothing(service, vault_dir):
-    before = (vault_dir / "Ideas.md").read_text()
+    before = (vault_dir / "Ideas.md").read_text(encoding="utf-8")
     out = service.batch(None, [{"action": "append_note", "path": "Ideas.md", "content": "x"}])
     assert out["dry_run"] and "+x" in out["results"][0]["result"]["diff"]
-    assert (vault_dir / "Ideas.md").read_text() == before
+    assert (vault_dir / "Ideas.md").read_text(encoding="utf-8") == before

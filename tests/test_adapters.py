@@ -63,12 +63,12 @@ def test_cli_gates_before_running(service):
 @posix_only
 def test_cli_runs_fake_binary(service, tmp_path):
     fake = tmp_path / "obsidian"
-    fake.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+    fake.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n", encoding="utf-8")
     fake.chmod(0o755)
     service.config.cli_path = str(fake)
     out = service.cli_run(None, "search", {"query": "hello world", "limit": 5})
     assert out["output"].split("\n") == ["vault=Test", "search", "query=hello world", "limit=5"]
-    fake.write_text("#!/bin/sh\necho 'Error: File not found'\n")
+    fake.write_text("#!/bin/sh\necho 'Error: File not found'\n", encoding="utf-8")
     with pytest.raises(ObsidianError) as exc:
         service.cli_run(None, "read", {"path": "x.md"})
     assert exc.value.code == Code.CLI_ERROR
@@ -77,7 +77,7 @@ def test_cli_runs_fake_binary(service, tmp_path):
 @posix_only
 def test_confirmation_for_eval(service, tmp_path):
     fake = tmp_path / "obsidian"
-    fake.write_text("#!/bin/sh\necho 42\n")
+    fake.write_text("#!/bin/sh\necho 42\n", encoding="utf-8")
     fake.chmod(0o755)
     service.config.cli_path = str(fake)
     service.config.permissions.eval_code = True
@@ -98,7 +98,7 @@ def test_bridge_must_be_localhost():
 @posix_only
 def test_headless_refuses_credentials_and_unknown(tmp_path):
     fake = tmp_path / "ob"
-    fake.write_text("#!/bin/sh\necho ok\n")
+    fake.write_text("#!/bin/sh\necho ok\n", encoding="utf-8")
     fake.chmod(0o755)
     h = HeadlessAdapter(str(fake))
     with pytest.raises(ObsidianError) as exc:
@@ -114,7 +114,7 @@ def test_headless_refuses_credentials_and_unknown(tmp_path):
 @posix_only
 def test_headless_publish_requires_permission_and_confirmation(service, tmp_path):
     fake = tmp_path / "ob"
-    fake.write_text("#!/bin/sh\necho \"$@\"\n")
+    fake.write_text("#!/bin/sh\necho \"$@\"\n", encoding="utf-8")
     fake.chmod(0o755)
     service.config.headless_path = str(fake)
     with pytest.raises(ObsidianError):
@@ -134,12 +134,12 @@ def test_headless_publish_requires_permission_and_confirmation(service, tmp_path
 @posix_only
 def test_headless_sync_conflict_guard(service, vault_dir, tmp_path):
     fake = tmp_path / "ob"
-    fake.write_text("#!/bin/sh\necho synced\n")
+    fake.write_text("#!/bin/sh\necho synced\n", encoding="utf-8")
     fake.chmod(0o755)
     service.config.headless_path = str(fake)
     service.config.permissions.headless = True
     service.config.permissions.sync_control = True
-    (vault_dir / ".obsidian" / "core-plugins.json").write_text('{"sync": true}')
+    (vault_dir / ".obsidian" / "core-plugins.json").write_text('{"sync": true}', encoding="utf-8")
     with pytest.raises(ObsidianError) as exc:
         service.headless_run(None, "sync")
     assert "same device" in exc.value.message

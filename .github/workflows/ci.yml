@@ -15,7 +15,7 @@ jobs:
         with: { node-version: "22" }
       - run: uv sync
       - run: uv run ruff check src tests
-      - run: uv run pytest -q
+      - run: uv run python -X warn_default_encoding -W error::EncodingWarning -m pytest -q
   typescript:
     runs-on: ubuntu-latest
     steps:

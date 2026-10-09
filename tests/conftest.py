@@ -32,7 +32,7 @@ def vault_dir(tmp_path: Path) -> Path:
         p.write_bytes(text.encode("utf-8"))
     (root / "pic.png").write_bytes(b"\x89PNG\r\n\x1a\n" + bytes(range(256)))
     (root / ".obsidian").mkdir()
-    (root / ".obsidian" / "daily-notes.json").write_text('{"format":"YYYY-MM-DD","folder":"Daily"}')
+    (root / ".obsidian" / "daily-notes.json").write_text('{"format":"YYYY-MM-DD","folder":"Daily"}', encoding="utf-8")
     return root
 
 

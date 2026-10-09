@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "obsidian": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/vrajkher/RAJobsidian", "obsidian-mcp", "serve", "--vault", "/path/to/Vault"]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+	"id": "mcp-bridge",
+	"name": "MCP Bridge",
+	"version": "0.1.0",
+	"minAppVersion": "1.7.2",
+	"description": "Local, token-protected bridge that lets the obsidian-mcp server read the active editor, workspace, and app events.",
+	"author": "vrajkher",
+	"isDesktopOnly": true
+}

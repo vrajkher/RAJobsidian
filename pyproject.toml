@@ -1,0 +1,39 @@
+[project]
+name = "obsidian-mcp"
+version = "0.1.0"
+description = "Obsidian MCP server: safe vault access, Obsidian CLI, plugin bridge, Headless, and OpenAI MCP Extensions."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "vrajkher" }]
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=2.3,<3",
+    "openai-mcp-extensions>=0.1.0,<0.2",
+    "ruamel.yaml>=0.18",
+]
+
+[project.scripts]
+obsidian-mcp = "obsidian_mcp.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.10",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

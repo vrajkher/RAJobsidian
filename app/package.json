@@ -1,0 +1,22 @@
+{
+  "name": "obsidian-mcp-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ChatGPT MCP App UI for obsidian-mcp (vault browser, tray, file viewer)",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --noEmit && node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@openai/mcp-extensions": "0.1.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "typescript": "5.9.3"
+  }
+}

@@ -159,7 +159,11 @@ class Policy:
             return True
         return bool(getattr(self.permissions, risk.value))
 
+    scope_check: Any = None  # optional callable(risk, action) for OAuth scope enforcement
+
     def require(self, risk: Risk, action: str) -> None:
+        if self.scope_check is not None:
+            self.scope_check(risk, action)
         if not self.allowed(risk):
             raise ObsidianError(
                 Code.PERMISSION_DENIED,

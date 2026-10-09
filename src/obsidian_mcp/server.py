@@ -55,7 +55,7 @@ from openai_mcp_extensions import (
 )
 from pydantic import BaseModel, Field
 
-from . import __version__
+from . import __version__, progress
 from .errors import Code, ObsidianError
 from .policy import Risk
 from .service import ObsidianService
@@ -193,7 +193,8 @@ class SubscriptionManager:
                 await self.publish(uri)
 
 
-def build_server(service: ObsidianService | None = None) -> MCPServer:
+def build_server(service: ObsidianService | None = None, *, auth: Any = None,
+                 token_verifier: Any = None) -> MCPServer:
     svc = service or ObsidianService()
     apps = Apps()
     openai = OpenAIExtensions()
@@ -232,6 +233,7 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
 
     @settings.update
     def _update_settings(set: dict[str, Any], context: Context[Any, Any]) -> Preferences:  # noqa: A002
+        svc.require_admin("Changing server settings")
         changes: dict[str, Any] = {}
         for key, value in set.items():
             if key == "default_vault":
@@ -364,6 +366,8 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
         icons=ICONS,
         extensions=[apps, openai, settings],
         middleware=[settings.advertise_legacy_capability],
+        auth=auth,
+        token_verifier=token_verifier,
     )
     subs = SubscriptionManager(svc, server)
     svc.listeners.append(subs.on_change)
@@ -531,9 +535,12 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
     def batch_edit(operations: Annotated[list[dict[str, Any]], Field(description=(
             "Items like {action:'append_note', path, content}. Actions: write_note, append_note, prepend_note, "
             "patch_note, set_properties, move_file, rename_file, copy_file, create_folder, trash_file."))],
-                   vault: VaultArg = None, dry_run: bool = True, atomic: bool = True) -> dict[str, Any]:
-        """Several edits with per-item results. Previews by default; atomic=true undoes all on any failure."""
-        return svc.batch(vault, operations, dry_run=dry_run, atomic=atomic)
+                   ctx: Context[Any, Any], vault: VaultArg = None, dry_run: bool = True,
+                   atomic: bool = True) -> dict[str, Any]:
+        """Several edits with per-item results and progress. Previews by default; atomic=true undoes all on
+        any failure or cancellation."""
+        return svc.batch(vault, operations, dry_run=dry_run, atomic=atomic, progress=progress.reporter(ctx),
+                         cancelled=progress.cancel_checker())
 
     @tool("list_operations", "Recent operations", READ)
     def list_operations(vault: VaultArg = None, limit: int = 20) -> dict[str, Any]:
@@ -626,6 +633,14 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
     def related_notes(path: PathArg, vault: VaultArg = None, limit: int = 10) -> dict[str, Any]:
         """Notes with similar wording (local TF-IDF; no data leaves the machine)."""
         return svc.related_notes(vault, path, limit)
+
+    @tool("semantic_search", "Search by meaning", READ)
+    def semantic_search(query: str, ctx: Context[Any, Any], vault: VaultArg = None, folder: str | None = None,
+                        limit: Annotated[int, Field(ge=1, le=50)] = 10) -> dict[str, Any]:
+        """Find note sections by meaning using the user's embedding model (opt-in; local by default).
+        The first run embeds the vault and reports progress; later runs only embed changed sections."""
+        return svc.semantic_search(vault, query, limit=limit, folder=folder, progress=progress.reporter(ctx),
+                                   cancelled=progress.cancel_checker())
 
     @tool("find_duplicates", "Find duplicates", READ)
     def find_duplicates(vault: VaultArg = None, threshold: float = 0.8) -> dict[str, Any]:
@@ -946,10 +961,12 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
             "sync-list-remote, sync-list-local, sync-status, sync, sync-config, sync-setup, sync-unlink, "
             "publish-list-sites, publish (use flags ['dry-run'] to preview), publish-config, "
             "publish-site-options, publish-setup, publish-unlink"))],
-                 vault: VaultArg = None, options: dict[str, Any] | None = None, flags: list[str] | None = None,
-                 confirm_token: str | None = None, allow_desktop_sync_conflict: bool = False) -> dict[str, Any]:
-        """Sync/Publish without the desktop app via 'ob' (open beta). Never handles passwords."""
-        return svc.headless_run(vault, command, options, flags, confirm_token, allow_desktop_sync_conflict)
+                 ctx: Context[Any, Any], vault: VaultArg = None, options: dict[str, Any] | None = None,
+                 flags: list[str] | None = None, confirm_token: str | None = None,
+                 allow_desktop_sync_conflict: bool = False) -> dict[str, Any]:
+        """Sync/Publish without the desktop app via 'ob' (open beta). Streams progress; never handles passwords."""
+        return svc.headless_run(vault, command, options, flags, confirm_token, allow_desktop_sync_conflict,
+                                progress=progress.reporter(ctx), cancelled=progress.cancel_checker())
 
     # ---- Resources ---------------------------------------------------------------------------------
     @server.resource("obsidian://capabilities", name="capabilities", title="Capabilities",
@@ -1011,7 +1028,8 @@ def build_server(service: ObsidianService | None = None) -> MCPServer:
 
     async def subscribe(ctx: Any, params: SubscribeRequestParams) -> EmptyResult:
         uri = str(params.uri)
-        parse_uri(uri)
+        vault_id, _ = parse_uri(uri)
+        await anyio.to_thread.run_sync(svc.vault, vault_id)  # enforces per-user vault access
         subs.add(uri, ctx.session)
         return EmptyResult()
 
@@ -1064,6 +1082,10 @@ def svc_vault_for_path(svc: ObsidianService, abs_path: str) -> tuple[str, str] |
     except OSError:
         return None
     for e in svc.registry.entries:
+        try:
+            svc.vault(e.id)  # skip vaults the current user may not access
+        except ObsidianError:
+            continue
         root = Path(e.path).resolve()
         if root in real.parents:
             rel = real.relative_to(root).as_posix()

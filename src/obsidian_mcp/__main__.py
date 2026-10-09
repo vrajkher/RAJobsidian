@@ -23,6 +23,16 @@ from .config import Config, ConfigStore, Permissions
 def _parse_value(key: str, raw: str) -> Any:
     types = {f.name: f.type for f in fields(Config)} | {f.name: "bool" for f in fields(Permissions)}
     kind = str(types.get(key, "str"))
+    if "dict" in kind:
+        try:
+            value = json.loads(raw)
+        except ValueError:
+            raise SystemExit(f'{key} expects JSON, e.g. {{"alice": ["Work"], "bob": ["*"]}}') from None
+        if not isinstance(value, dict):
+            raise SystemExit(f"{key} expects a JSON object")
+        return value
+    if "list" in kind:
+        return [part.strip() for part in raw.split(",") if part.strip()]
     if "bool" in kind:
         if raw.lower() in ("1", "true", "yes", "on"):
             return True
@@ -108,15 +118,30 @@ def cmd_serve(args: argparse.Namespace) -> None:
         svc.connect_vault(args.vault, make_default=True)
     elif os.environ.get("OBSIDIAN_VAULT"):
         svc.connect_vault(os.environ["OBSIDIAN_VAULT"], make_default=True)
-    server = build_server(svc)
+    cfg = svc.config
+    oauth = args.transport == "http" and bool(cfg.oauth_issuer_url)
+    if oauth:
+        from mcp.server.auth.settings import AuthSettings
+
+        from .auth import IntrospectionVerifier
+
+        if not (cfg.oauth_introspection_url and cfg.oauth_resource_url):
+            raise SystemExit("OAuth needs oauth_issuer_url, oauth_introspection_url and oauth_resource_url.")
+        server = build_server(svc, auth=AuthSettings(
+            issuer_url=cfg.oauth_issuer_url, resource_server_url=cfg.oauth_resource_url,
+            required_scopes=cfg.oauth_required_scopes or None), token_verifier=IntrospectionVerifier(cfg))
+    else:
+        server = build_server(svc)
     if args.transport == "stdio":
         anyio.run(run_with_poller, server, server.run_stdio_async)
         return
     import uvicorn
 
-    token = os.environ.get("OBSIDIAN_MCP_HTTP_TOKEN")
+    token = None if oauth else os.environ.get("OBSIDIAN_MCP_HTTP_TOKEN")
     local = args.host in ("127.0.0.1", "localhost", "::1")
-    if not token and not (local and args.no_auth):
+    if oauth:
+        print(f"OAuth enabled: tokens from {cfg.oauth_issuer_url}, verified by introspection.", file=sys.stderr)
+    elif not token and not (local and args.no_auth):
         token = secrets.token_urlsafe(24)
         print(f"OBSIDIAN_MCP_HTTP_TOKEN not set; generated one for this run:\n  {token}", file=sys.stderr)
     app = server.streamable_http_app()

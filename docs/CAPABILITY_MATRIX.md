@@ -56,7 +56,7 @@ Source-backed inventory of Obsidian and OpenAI MCP Extensions features, and how 
 | Merge, extract (Note composer) | Note composer | FS | – | ✅ | `test_merge_and_extract` | Note composer templates are not applied |
 | Link insertion, link repair | – | FS | – | ✅ | `test_link_notes_and_repair` | |
 | Duplicate detection | – | FS | – | ✅ | `test_duplicates_and_related` | Exact, near (shingles), and same name |
-| Semantic search | – | FS | – | 🟠 | `related_notes` (TF-IDF) | Local TF-IDF only. No external embedding provider is implemented, by design for privacy. |
+| Semantic search | – | FS + user's embedding endpoint | opt-in (`semantic_search`); local model server by default | ✅ | `tests/test_semantic.py` | Off by default. Any OpenAI-compatible `/embeddings` endpoint (Ollama, LM Studio, llama.cpp, vLLM; remote only with `embedding_allow_remote`). Excludes folders and `ai: false` notes. Incremental cache. `related_notes` (TF-IDF) still works offline. |
 
 ## 3. Core plugins
 
@@ -170,5 +170,5 @@ Optional official plugins:
 | Concurrency (per-vault locks, ETags), safe retries (idempotent reads) | ✅ | concurrency test |
 | Secret redaction (`bridge_token` never echoed; config 0600) | ✅ | `public_dict` |
 | Prompt-injection stance (note content is data; permissions not model-changeable) | ✅ design | instructions, settings exclusions |
-| Cancellation / timeouts / progress | 🟠 | CLI/Headless timeouts implemented; no progress notifications yet |
-| Per-user isolation over HTTP | 🟠 | One process per user (`OBSIDIAN_MCP_HOME`); no multi-tenant OAuth |
+| Cancellation / timeouts / progress | ✅ | `tests/test_progress.py`: `batch_edit` and `headless` send `notifications/progress`; cancelling stops the work (batch rolls back atomically; the `ob` process is killed). CLI/Headless timeouts. |
+| Per-user isolation over HTTP (OAuth 2.1 resource server) | ✅ | `tests/test_oauth.py`: RFC 7662 introspection (fail-closed, audience-checked), protected-resource metadata, per-user vault allow-lists, admin-only changes, read-only tokens; real HTTP end-to-end |

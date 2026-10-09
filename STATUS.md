@@ -1,6 +1,6 @@
 # Implementation status (checkpoint)
 
-Last updated: 2026-10-09. All seven planned phases have a working implementation. See
+Last updated: 2026-10-09. All seven planned phases have a working implementation, plus follow-ups 2–4 (progress/cancellation, semantic search, OAuth). See
 [docs/CAPABILITY_MATRIX.md](docs/CAPABILITY_MATRIX.md) for per-feature status and
 [docs/VERIFICATION.md](docs/VERIFICATION.md) for evidence.
 
@@ -14,23 +14,20 @@ Last updated: 2026-10-09. All seven planned phases have a working implementation
 | 4. Core plugins etc. | Every current core plugin mapped (data and/or native control); Canvas (JSON Canvas 1.0); Bases (structure + native query); tasks; templates; daily/unique/periodic notes; workspace |
 | 5. OpenAI extensions | Global/thread/file entrypoints, quick action, deep links, structured settings, onboarding skill, display modes, mentions, model context, messages, file opening, resource read/representation/subscriptions/writes, extended forms over MRTR; TS app with browser e2e |
 | 6. Headless & community | `ob` adapter (Sync/Publish, no credentials, conflict guard); registry for Dataview, Tasks, Templater, Periodic Notes |
-| 7. Verification & docs | 97 Python tests + browser e2e; README, user guide, architecture, troubleshooting, verification; install scripts; examples; CI (3 OSes) |
+| 7. Verification & docs | 113 Python tests + browser e2e; README, user guide, architecture, troubleshooting, verification; install scripts; examples; CI (3 OSes) |
 
 ## Known gaps / unresolved
 
 - 🟡 Not yet run against a real Obsidian app, Sync/Publish account, Headless login, or ChatGPT host (see VERIFICATION.md, items 1–5).
 - Legacy (pre-2026) `openai/elicitation/create` path in `choose_notes` is untested: the SDK has no client for it.
-- No MCP progress notifications for long operations (CLI/Headless have timeouts).
-- Semantic search is local TF-IDF only; an external embedding provider is intentionally not implemented.
-- HTTP multi-user: one process per user; no OAuth.
 - The unique-note config file name/default and the attachment-folder key are undocumented assumptions with fallbacks.
 
 ## Next steps (in order)
 
 1. Run VERIFICATION.md items 1–5 locally and record results in this file; fix anything that differs.
-2. Add MCP progress notifications for batch edits and Headless runs.
-3. Optional: an embedding provider behind `semantic_search` with explicit opt-in and a local model option.
-4. Optional: OAuth for remote multi-user deployments.
+2. ~~Add MCP progress notifications for batch edits and Headless runs.~~ Done: progress plus cancellation (batch rollback, `ob` kill).
+3. ~~Optional: an embedding provider behind `semantic_search`.~~ Done: OpenAI-compatible endpoint, local by default, explicit remote opt-in, exclusions, incremental cache.
+4. ~~Optional: OAuth for remote multi-user deployments.~~ Done: resource-server OAuth (introspection), per-user vaults, admins, read-only scope.
 
 ## How to resume
 

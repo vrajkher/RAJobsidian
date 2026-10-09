@@ -48,7 +48,24 @@ obsidian-mcp serve --transport http --host 127.0.0.1 --port 8765
 # Client URL: http://127.0.0.1:8765/mcp   Header: Authorization: Bearer $OBSIDIAN_MCP_HTTP_TOKEN
 ```
 
-To expose it beyond localhost, put it behind HTTPS (for example a reverse proxy). Run one server process per user, each with its own `OBSIDIAN_MCP_HOME`.
+To expose it beyond localhost, put it behind HTTPS (for example a reverse proxy).
+
+**Remote multi-user with OAuth.** Use your own OAuth 2.1 authorization server (Keycloak, Auth0, Okta, Entra ID, Authentik…). This server only *validates* tokens, using RFC 7662 introspection, and never issues them. Register it as a resource server, then:
+
+```sh
+obsidian-mcp config set oauth_issuer_url https://auth.example.com/realms/notes
+obsidian-mcp config set oauth_introspection_url https://auth.example.com/realms/notes/protocol/openid-connect/token/introspect
+obsidian-mcp config set oauth_resource_url https://notes.example.com/mcp      # the public URL clients use
+obsidian-mcp config set oauth_client_id_env INTROSPECT_CLIENT_ID              # credentials stay in env vars
+obsidian-mcp config set oauth_client_secret_env INTROSPECT_CLIENT_SECRET
+obsidian-mcp config set oauth_required_scopes mcp
+obsidian-mcp config set oauth_write_scope vault:write                         # tokens without it are read-only
+obsidian-mcp config set user_vaults '{"alice": ["Work"], "bob": ["Family", "Recipes"], "me": ["*"]}'
+obsidian-mcp config set admins me                                             # may connect vaults / change settings
+obsidian-mcp serve --transport http --host 0.0.0.0 --port 8765
+```
+
+Clients discover the authorization server from `/.well-known/oauth-protected-resource/mcp` and send `Authorization: Bearer <token>`. Users are identified by the token's `sub`. Each user sees only the vaults listed for them, and a vault they may not use looks exactly like one that doesn't exist. Users not listed in `user_vaults` get no vaults. The Obsidian CLI, bridge plugin, Headless, and CSS-snippet tools control the **host computer's** Obsidian app, so in OAuth mode only `admins` can use them. Everyone else works through the filesystem tools on their own vaults.
 
 ## Permissions
 
@@ -77,6 +94,28 @@ obsidian-mcp config show
 ```
 
 Models cannot change risky permissions. When an action needs confirmation, the assistant shows a summary and only proceeds after you agree.
+
+## Semantic search (optional)
+
+`search_notes` matches words. `semantic_search` finds notes by meaning, using an embedding model **you** choose. It is off until you enable it:
+
+```sh
+# Local and private (recommended): Ollama on this computer
+ollama pull nomic-embed-text
+obsidian-mcp config set semantic_search true
+
+# Any other OpenAI-compatible server (LM Studio, llama.cpp, vLLM...)
+obsidian-mcp config set embedding_url http://127.0.0.1:1234/v1
+obsidian-mcp config set embedding_model <model-name>
+
+# A remote service sends note text off this computer, so it needs two explicit steps:
+obsidian-mcp config set embedding_url https://api.openai.com/v1
+obsidian-mcp config set embedding_model text-embedding-3-small
+obsidian-mcp config set embedding_api_key_env OPENAI_API_KEY   # the key stays in your environment
+obsidian-mcp config set embedding_allow_remote true
+```
+
+Keep notes out of it with `obsidian-mcp config set embedding_exclude "Private,Journal"`, or add `ai: false` to a note's properties. The first search embeds the vault (with progress updates); later searches only embed changed sections. Vectors are cached in `~/.config/obsidian-mcp/state/semantic/`.
 
 ## Everyday tasks
 
